@@ -13,7 +13,7 @@ import csv
 from globals import *
 from utils import loadQUANTMatrix, loadCSV
 from zonecodes import ZoneCodes
-from databuilder import geocodeGeolytix
+from databuilder import geocodeGeolytix, computeGeolytixCosts
 from incometable import IncomeTable
 from attractions import attractions_msoa_floorspace_from_retail_points
 from quantretailmodel import QUANTRetailModel
@@ -22,10 +22,13 @@ from quantretailmodel import QUANTRetailModel
 if not os.path.isfile(data_retailpoints_geocoded):
     geocodeGeolytix()
 
+#make geolytix costs file which is a csv of origin to destination zone with a cost
+computeGeolytixCosts()
+
 #load zone codes lookup file to convert MSOA codes into zone i indexes for the model
 zonecodes = ZoneCodes.fromFile()
 
-#load cost matrix, time in seconds between MSOA zones
+#load cost matrix, time in minutes between MSOA zones
 cij = loadQUANTMatrix(os.path.join(modelRunsDir,QUANTCijRoadMinFilename))
 
 #load income data for MSOA residential zones

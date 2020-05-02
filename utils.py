@@ -128,7 +128,7 @@ def loadQUANTMatrix(filename):
         (m,) = struct.unpack('i', f.read(4))
         (n,) = struct.unpack('i', f.read(4))
         print("loadQUANTMatrix::m=",m,"n=",n)
-        matrix = np.arange(m*n).reshape(m, n) #and hopefully m===n, but I'm not relying on it
+        matrix = np.arange(m*n,dtype=np.float).reshape(m, n) #and hopefully m===n, but I'm not relying on it
         for i in range(0,m):
             data = struct.unpack('{0}f'.format(n), f.read(4*n)) #read a row back from the stream - data=list of floats
             for j in range(0,n):

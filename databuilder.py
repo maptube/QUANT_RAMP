@@ -7,13 +7,36 @@ TODO: this is supposed to collect and build all external data - using hand craft
 At the moment, it builds model-runs/retailpoints_geocoded.csv with oa geocoded Geolytix retail points
 """
 import os
+import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point
+from shapely.ops import nearest_points
 from shapely.strtree import STRtree
 import csv
 
 from globals import *
+from utils import loadQUANTMatrix
+from zonecodes import ZoneCodes
+
+
+"""
+ensure_geography
+ensure that the MSOA and OA boundary files are downloaded from infuse and extracted to the
+correct locations
+
+TODO: not finished
+"""
+def ensure_geography():
+    #data_oa_shapefile
+    #data_msoa_shapefile
+    if not os.path.isdir('external-data'):
+        print("make dir")
+    if not os.path.isdir('external-data/geography'):
+        print("make dir")
+    #todo: download and extract
+
 
 """
 geocodeGeolytix
@@ -140,4 +163,103 @@ def geocodeGeolytix():
 #end def geocodeGeolytix
 
 ################################################################################
+
+"""
+Compute cost function for Geolytix retail points based on the QUANT MSOA to MSOA costs matrix
+with a correction based on how far the Geolytix point is from the MSOA centroid.
+Costs are times in minutes.
+The Geolytix points are keyed using the store name, east and north locations.
+The cost matrix used is for the road mode.
+PRE: requires geocodeGeolytix to have been called first to generate the Geolytix MSOA file
+    Consumes QUANT cost matrix file, centroids file and geolytix geocoded retail points file
+POST: creates a GeolytixCost file in the modelruns dir: data_retailpoints_msoa_costs
+"""
+def computeGeolytixCosts():
+    #const to define what speed we travel the additional distance to the retail point e.g. 30mph = 13 ms-1
+    metresPerSec = 13.0
+
+    #load cost matrix, time in minutes between MSOA zones
+    cij = loadQUANTMatrix(os.path.join(modelRunsDir,QUANTCijRoadMinFilename))
+    m, n = cij.shape
+
+    #load zone codes lookup file to convert MSOA codes into zone i indexes for the model
+    zonecodes = ZoneCodes.fromFile()
+
+    #load the centroids file - this gives us the points used for the msoa trips in cij
+    #zonecode,zonei,zone_lat,zone_lon,vertexid,vertex_lat,vertex_lon,distMetres
+    #E02000001,0,51.515,-0.09051585,532370_181559,51.5174481287716,-0.09364236153270947,348.1855
+    df = pd.read_csv(os.path.join(modelRunsDir,QUANTCijRoadCentroidsFilename))
+    #df['geometry'] = df.apply(lambda row: Point(row.vertex_lon, row.vertex_lat), axis=1)
+    #print(df.head(6))
+    origin_crs = {'init': 'epsg:4326'}
+    gdf = gpd.GeoDataFrame(df, crs=origin_crs, geometry=gpd.points_from_xy(df.vertex_lon, df.vertex_lat))
+    #print(gdf.head(6))
+    #of course, this is in lat/lon when we want east north
+    centroids = gdf.to_crs("EPSG:27700") #there, that's better
+    #print(centroids.head(6))
+    dest_unary = centroids["geometry"].unary_union # and need this join for the centroid points nearest lookup
+
+
+    with open(data_retailpoints_msoa_costs, 'w') as writer:
+        writer.write("origin,destination,cost_minutes,retail_delta_mins\n")
+        #open the geocoded Geolytix file containing the retail points with their MSOA codes
+        #name,east,north,floorspace,oa,msoa
+        #Tesco Express,561808.4009,99110.41946,140.0,E00106155,E02004365
+        count=0
+        with open(data_retailpoints_geocoded, 'r', newline = '') as csvFile:
+            reader = csv.reader(csvFile,delimiter=',')
+            next(reader) #skip header row
+            for row in reader:
+                name = row[0]
+                print(str(count)+" "+name)
+                count+=1
+                east = float(row[1])
+                north = float(row[2])
+                #msoacode = row[5]
+                retailkey = name+"_"+str(int(east))+"_"+str(int(north))
+                #lookup the msoa data
+            
+                #lookup using msoa code - but Scotland IZ is 2001 when we have 2011!
+                #print("looking up msoa code ",msoacode)
+                #centroidrow = centroids.loc[centroids['zonecode'] == msoacode]
+                #zonei = int(centroidrow.zonei)
+                #p = centroidrow.geometry
+            
+                #lookup by closest msoa centroid to geolytix point
+                near = nearest_points(Point(east,north),dest_unary)
+                match_geom = centroids.loc[centroids.geometry==near[1]]
+                zonei = int(match_geom.zonei)
+                p = match_geom.geometry
+                #print(match_geom)
+
+                east2=float(p.centroid.x)
+                north2=float(p.centroid.y)
+
+                dx = east-east2
+                dy = north-north2
+                dist = np.sqrt(dx*dx+dy*dy) #dist between retail point and centroid used for shortest path
+                #work out an additional delta cost based on increased time getting from this point to the centroid
+                deltaCost = (dist/metresPerSec)/60.0 #transit time in mins
+
+                #OK, now write out this Geolytix point to every MSOA in turn in both directions, adding on the deltaCost
+                #NOTE: I'm only going to output msoa zone to retail point to halve the file size
+                for zonecodej in zonecodes.dt:
+                    zonej = zonecodes.dt[zonecodej]['zonei']
+                    costij = cij[zonei,zonej]
+                    costji = cij[zonej,zonei]
+                    #retail to msoa centroid
+                    #writer.write("{0}, {1}, {2:.2f}, {3:.2f}\n".format(retailkey,zonecodej,(costij+deltaCost),deltaCost))
+                    #msoa centroid to retail
+                    writer.write("{0}, {1}, {2:.2f}, {3:.2f}\n".format(zonecodej,retailkey,(costji+deltaCost),deltaCost))
+                #end for
+            #end for
+        #end with (reader)
+    #end with (writer)
+
+################################################################################
+
+
+
+        
+
 
