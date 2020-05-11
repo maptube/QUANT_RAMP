@@ -15,6 +15,7 @@ import csv
 from globals import *
 from utils import loadQUANTMatrix, loadCSV, loadMatrix, saveMatrix, zonecodeIndexData
 from zonecodes import ZoneCodes
+from databuilder import ensureFile
 from databuilder import geocodeGeolytix, computeGeolytixCosts, buildSchoolsPopulationTableEnglandWales, buildSchoolsPopulationTableScotland
 from incometable import IncomeTable
 from attractions import attractions_msoa_floorspace_from_retail_points
@@ -31,6 +32,16 @@ from costs import costMSOAToPoint
 #required from the original sources. After that, if the file exists in the
 #directory, then nothing new is created and this section is effectively
 #skipped, up until the model run section at the end.
+
+#Downloads first:
+
+#this will get us the big QUANT road travel times matrix
+ensureFile(os.path.join(modelRunsDir,QUANTCijRoadMinFilename),url_QUANTCijRoadMinFilename)
+
+#todo: geolytics?
+#todo: osf schools data
+
+#Now on to file creation
 
 #databuilder.py - run the code there...
 if not os.path.isfile(data_retailpoints_geocoded):
@@ -60,24 +71,6 @@ if not os.path.isfile(data_schoolagepopulation):
 # End initialisation
 ################################################################################
 
-#Now on to the model run section
-
-
-#load zone codes lookup file to convert MSOA codes into zone i indexes for the model
-#zonecodes = ZoneCodes.fromFile()
-zonecodes = pd.read_csv(os.path.join(modelRunsDir,ZoneCodesFilename))
-zonecodes.set_index('areakey')
-
-#load cost matrix, time in minutes between MSOA zones
-cij = loadQUANTMatrix(os.path.join(modelRunsDir,QUANTCijRoadMinFilename))
-
-#now run the relevant models to produce the outputs
-#runRetail()
-runSchools()
-
-################################################################################
-# END OF MAIN PROGRAM                                                          #
-################################################################################
 
 #What follows from here are the different model run functions for retail, schools
 #and hospitals
@@ -112,6 +105,7 @@ def runRetail():
 ################################################################################
 
 def runSchoolsModel():
+    print("runSchoolsModel running primary schools")
     #schools model
     #load primary population
     primaryZones, primaryAttractors = QUANTSchoolsModel.loadSchoolsData(data_schools_ewprimary)
@@ -161,7 +155,8 @@ def runSchoolsModel():
 
     ###
 
-    #OK, now on to secondary schools... yes, I know it's bascially the same code
+    #OK, now on to secondary schools... yes, I know it's basically the same code
+    print("runSchoolsModel running secondary schools")
     secondaryZones, secondaryAttractors = QUANTSchoolsModel.loadSchoolsData(data_schools_ewsecondary)
     row,col = secondaryZones.shape
     print("secondaryZones count =",row)
@@ -194,6 +189,26 @@ def runSchoolsModel():
 ##
 
 
+################################################################################
+
+
+#Now on to the model run section
+
+
+#load zone codes lookup file to convert MSOA codes into zone i indexes for the model
+#zonecodes = ZoneCodes.fromFile()
+zonecodes = pd.read_csv(os.path.join(modelRunsDir,ZoneCodesFilename))
+zonecodes.set_index('areakey')
+
+#load cost matrix, time in minutes between MSOA zones
+cij = loadQUANTMatrix(os.path.join(modelRunsDir,QUANTCijRoadMinFilename))
+
+#now run the relevant models to produce the outputs
+#runRetailModel()
+runSchoolsModel()
+
+################################################################################
+# END OF MAIN PROGRAM                                                          #
 ################################################################################
 
 

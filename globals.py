@@ -34,6 +34,10 @@ data_secondary_attractors = os.path.join(modelRunsDir,"secondaryAttractors.csv")
 data_secondary_population = os.path.join(modelRunsDir,"secondaryPopulation.csv")
 data_secondary_probPij = os.path.join(modelRunsDir,"secondaryProbPij.bin")
 ################################################################################
+#these are download urls for big external data that can't go in the GitHub repo
+url_QUANTCijRoadMinFilename = "https://liveuclac-my.sharepoint.com/:u:/g/personal/ucfnrmi_ucl_ac_uk/EZd4HZVVHd1OuZ_Qj3uKGNcBSe_OoG6unjrVbAyRvGquaQ?e=LxuwMv"
+#osf schools
+################################################################################
 
 #TravelToWorkFilename = 'wu03ew_msoa.csv'
 #ZoneCodesFilename = 'ZoneCodesText.csv'
