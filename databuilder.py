@@ -7,6 +7,7 @@ TODO: this is supposed to collect and build all external data - using hand craft
 At the moment, it builds model-runs/retailpoints_geocoded.csv with oa geocoded Geolytix retail points
 """
 import os
+import wget
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -19,6 +20,21 @@ import csv
 from globals import *
 from utils import loadQUANTMatrix
 from zonecodes import ZoneCodes
+
+"""
+ensureFile
+Check the local file system for the existence of a file and download it from
+the givel url if it's not present. Used for installation of data file from
+remote sources so we don't check "official" data into the GitHub repo.
+@param localFilename The file to check for existence on the local file system
+@param url Where to download it if it's not there
+"""
+def ensureFile(localFilename,url):
+    if not os.path.isfile(localFilename):
+        print("Downloading "+localFilename+" from "+url)
+        wget.download(url,localFilename)
+        
+################################################################################
 
 
 """
@@ -258,8 +274,56 @@ def computeGeolytixCosts():
 
 ################################################################################
 
+"""
+buildSchoolsPopulationTable
+Takes the QS103 age structure by single age Census table and adds up the number of
+primary and secondary age school children by MSOA.
+Primary age: 5-11
+Secondary age: 12-16
+POST: writes out data_schoolagepopulation_englandwales
+NOTE: you then need to join the england/wales and scotland files together
+"""
+def buildSchoolsPopulationTableEnglandWales():
+    df = pd.read_csv(data_census_QS103)
+    df['count_primary'] = (df['Age: Age 5; measures: Value']
+        + df['Age: Age 6; measures: Value'] + df['Age: Age 7; measures: Value'] + df['Age: Age 8; measures: Value']
+        + df['Age: Age 9; measures: Value'] + df['Age: Age 10; measures: Value'] + df['Age: Age 11; measures: Value']
+    )
+    df['count_secondary'] = (df['Age: Age 12; measures: Value'] + df['Age: Age 13; measures: Value'] + df['Age: Age 14; measures: Value']
+        + df['Age: Age 15; measures: Value'] + df['Age: Age 16; measures: Value']
+    )
+    df2 = pd.DataFrame({'geography code': df['geography code'], 'count_primary': df['count_primary'], 'count_secondary': df['count_secondary']})
+    df2.to_csv(data_schoolagepopulation_englandwales)
 
+################################################################################
 
-        
+"""
+buildSchoolsPopulationTableScotland
+Build schools population table for scotland based on QS103SC from the census bulk download:
+https://www.scotlandscensus.gov.uk/ods-web/data-warehouse.html#bulkdatatab
+This is from the data zones 2001 file, NOT the datazones 2011 file.
+Also required is the 2001 DZ to 2001 IZ conversion table.
+NOTE: the QS103SC file had to have the "-" chars turned into zeroes, otherwise pandas won't
+recognise the age columns as integers and defaults to strings, after which strange things happen
+POST: writes out data_schoolagepopulation_scotland
+NOTE: you then need to join the england/wales and scotland files together
+"""
+def buildSchoolsPopulationTableScotland():
+    df = pd.read_csv(data_census_QS103SC) #join on "Unnamed: 0", it's blank! This is the datazone code field
+    #print(df.head())
+    df.set_index('Unnamed: 0')
+    dfLookup = pd.read_csv(lookup_DZ2001_to_IZ2001) #join on ZONECODE, which is the datazone code
+    #print(dfLookup.head())
+    df = df.join(other=dfLookup.set_index('ZONECODE'),on='Unnamed: 0')
+    #df.to_csv("scotlookup_hack.csv")
+    #sum age columns to get the primary and secondary count columns - reducing columns makes it easier later
+    df['count_primary'] = df['5'] + df['6'] + df['7'] + df['8'] + df['9'] + df['10'] + df['11']
+    df['count_secondary'] = df['12'] + df['13'] + df['14'] + df['15'] + df['16']
+    #df.to_csv("scotlookup_hack2.csv")
+    #OK, that's the age ranges summed to give the primary and secondary counts on the DZ geomgraphy,
+    #now aggregate and sum the DZ codes to make an IZ dataset
+    #group and sum on the IZ_CODE field
+    df2 = df.groupby(['IZ_CODE']).agg({'count_primary': "sum", 'count_secondary': "sum"})
+    df2.to_csv(data_schoolagepopulation_scotland)
 
-
+################################################################################

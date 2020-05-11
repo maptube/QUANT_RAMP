@@ -201,3 +201,31 @@ def loadCSV(filename):
     return csv_data
 
 ###############################################################################
+
+"""
+DEPRECATED - probably not needed if zonecodes are a Pandas dataframe
+zonecodeIndexData
+Take a dataframe and convert to a numpy vector by coding the MSOA into the index
+number in the resulting vector.
+@param zonecodes The zonecodes lookup table containing the MSOA to Zonecodes lookup
+@param df The dataframe to index code
+@param strAreaKeyField the field name in the data frame of the MSOA code
+@param strDataField The field name in the data frame of the actual data
+@returns np.Array of the data in the correct order
+"""
+def zonecodeIndexData(zonecodes,df,strAreaKeyField,strDataField):
+    m = len(zonecodes.dt)
+    data = np.zeros(m)
+    for row in df.itertuples(index = False): #todo: this is supposed to be BAD! use a join and index instead?
+        areakey = getattr(row,strAreaKeyField)
+        val = getattr(row,strDataField)
+        zonei = zonecodes.dt[areakey]['zonei']
+        #print("zonei=",zonei,"areakey=",areakey,"val=",val)
+        data[zonei]=val
+    #end for
+    return data
+
+###############################################################################
+
+
+

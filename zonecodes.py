@@ -1,4 +1,6 @@
 """
+DEPRECATED - until this does anything more thn just load the data into a map, I'm using Panda.read_csv instead
+
 zonecodes.py
 Handle creation, loading and operations on the zone codes lookup table.
 This is the table that contains the mapping between the zone number and the zone area key code (i.e. MSOA). It also
