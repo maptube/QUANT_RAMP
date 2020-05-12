@@ -12,7 +12,6 @@ it work yet.
 File structure:
 
 + QUANTRampAPI.py
-|
 + model-runs
   + zonecodes.csv
   + primaryProbPij.bin
