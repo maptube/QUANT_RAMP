@@ -11,11 +11,9 @@ it work yet.
 # INSTALLATION
 File structure:
 
-|
 + QUANTRampAPI.py
 |
 + model-runs
-  |
   + zonecodes.csv
   + primaryProbPij.bin
   + primaryZones.csv
