@@ -86,7 +86,8 @@ class QUANTSchoolsModel:
     """
     loadSchoolsData
     Loads the schools data from CSV containing [capacity,east,north]
-    EstablishmentStatus_code 1=open, 2=closed
+    URN = unique school reference number - DO NOT USE the EstablishmentCode as it's not unique!
+    REMOVED - all in file are open EstablishmentStatus_code 1=open, 2=closed
     SchoolCapacity (can be N/A)
     Easting
     Northing
@@ -95,21 +96,22 @@ class QUANTSchoolsModel:
     """
     @staticmethod
     def loadSchoolsData(filename):
-        keyFieldName = "EstablishmentNumber"
-        openFieldName = "EstablishmentStatus_code"
+        keyFieldName = "URN"
+        #openFieldName = "EstablishmentStatus_code"
         capacityFieldName = "SchoolCapacity"
         eastFieldName = "Easting"
         northFieldName = "Northing"
-        df = pd.read_csv(filename,usecols=[keyFieldName,openFieldName,capacityFieldName,eastFieldName,northFieldName])
+        # removed df = pd.read_csv(filename,usecols=[keyFieldName,openFieldName,capacityFieldName,eastFieldName,northFieldName])
+        df = pd.read_csv(filename,usecols=[keyFieldName,capacityFieldName,eastFieldName,northFieldName])
         df = df.dropna(axis=0) #drop the n/a values
-        df = df[df[openFieldName] == 1] #drop any school which is not open (i.e. retain==1)
+        #REMOVED - all open df = df[df[openFieldName] == 1] #drop any school which is not open (i.e. retain==1)
         df.reset_index(drop=True,inplace=True) #IMPORTANT, otherwise indexes remain for the 28,000 or so rows i.e. idx=0..28000! NOT true row count!
         #row,col = df.shape
         #print("primaryZones count =",df)
         #print("primaryZones max = ",df.max(axis=0))
 
-        dfzones = pd.DataFrame({'EstablishmentNumber':df.EstablishmentNumber,'zonei':df.index,'east':df.Easting,'north':df.Northing})
-        #dfzones.set_index('EstablishmentNumber')
+        dfzones = pd.DataFrame({'URN':df.URN,'zonei':df.index,'east':df.Easting,'north':df.Northing})
+        #dfzones.set_index('URN')
         dfattractors = pd.DataFrame({'zonei':df.index,'SchoolCapacity':df.SchoolCapacity})
 
         return dfzones, dfattractors
@@ -158,7 +160,7 @@ class QUANTSchoolsModel:
         #Aj=FjLambda where the attractor is +ve power of floorspace (from retail model)
         #cij=travel cost
         #Beta=scaling param
-        Pij = np.arange(self.m*self.n).reshape(self.m, self.n) #or np.zeros(N*N).reshape(N, N)
+        Pij = np.arange(self.m*self.n,dtype=np.float).reshape(self.m, self.n) #or np.zeros(N*N).reshape(N, N)
         ExpMBetaCij = np.exp(-Beta*self.cij)
         for i in range(self.m):
             #denom = 0
@@ -182,7 +184,7 @@ class QUANTSchoolsModel:
     @returns probPij, but with each set of MSOA flows to schools scaled to a probability
     """
     def computeProbabilities(self,Pij):
-        probPij = np.arange(self.m*self.n).reshape(self.m, self.n)
+        probPij = np.arange(self.m*self.n,dtype=np.float).reshape(self.m, self.n)
         for i in range(self.m):
             sum=np.sum(Pij[i,])
             if sum<=0:

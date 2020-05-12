@@ -94,8 +94,11 @@ def runRetail():
 
     m, n = cij.shape
     model = QUANTRetailModel(m,n)
-    Sij_a = model.run(1.0,Aj,cij,Ei)
+    beta = 0.13 #from the QUANT calibration
+    Sij_a = model.run(beta,Aj,cij,Ei)
     #TODO: what do you do with the data?
+    cbar = model.computeCBar(Sij_a,cij)
+    print("cbar=",cbar)
 
 ################################################################################
 
@@ -108,7 +111,7 @@ def runSchoolsModel():
     print("runSchoolsModel running primary schools")
     #schools model
     #load primary population
-    primaryZones, primaryAttractors = QUANTSchoolsModel.loadSchoolsData(data_schools_ewprimary)
+    primaryZones, primaryAttractors = QUANTSchoolsModel.loadSchoolsData(data_schools_ews_primary)
     #print(primaryZones.head())
     #print(primaryAttractors.head())
     row,col = primaryZones.shape
@@ -140,24 +143,26 @@ def runSchoolsModel():
     #note: you can also transform the attactors
     #Pij = pupil flows
     start = time.perf_counter()
-    #primary_Pij = model.run(beta)
+    primary_Pij = model.run(beta)
     end = time.perf_counter()
     print("primary school model run elapsed time (secs)=",end-start)
-    #cbar = model.computeCBar(primary_Pij,primary_cij)
-    #print("cbar=",cbar)
+    cbar = model.computeCBar(primary_Pij,primary_cij)
+    print("cbar=",cbar)
     #cbar=11.208839769105412, beta=0.13 OLD EW S=0
     #cbar= 9.302208987297865, beta=0.2 OLD EW S=0 
     #cbar=24.646849666280524, beta=0.13 NEW EWS
     #cbar= 21.00304170762631, beta=0.2 NEW EWS
+    ##
+    #cbar= 16.430355812412476, beta=0.13 CORRECT EWS
 
-    #primary_probPij = model.computeProbabilities(primary_Pij)
-    #saveMatrix(primary_probPij,data_primary_probPij)
+    primary_probPij = model.computeProbabilities(primary_Pij)
+    saveMatrix(primary_probPij,data_primary_probPij)
 
     ###
 
     #OK, now on to secondary schools... yes, I know it's basically the same code
     print("runSchoolsModel running secondary schools")
-    secondaryZones, secondaryAttractors = QUANTSchoolsModel.loadSchoolsData(data_schools_ewsecondary)
+    secondaryZones, secondaryAttractors = QUANTSchoolsModel.loadSchoolsData(data_schools_ews_secondary)
     row,col = secondaryZones.shape
     print("secondaryZones count =",row)
     print("secondaryZones max = ",secondaryZones.max(axis=0))
@@ -186,6 +191,7 @@ def runSchoolsModel():
     print("cbar=",cbar)
     secondary_probPij = model.computeProbabilities(secondary_Pij)
     saveMatrix(secondary_probPij,data_secondary_probPij)
+    #cbar= 16.5250843880515, beta=0.13 correct EWS
 ##
 
 
@@ -204,8 +210,8 @@ zonecodes.set_index('areakey')
 cij = loadQUANTMatrix(os.path.join(modelRunsDir,QUANTCijRoadMinFilename))
 
 #now run the relevant models to produce the outputs
-#runRetailModel()
-runSchoolsModel()
+runRetailModel()
+#runSchoolsModel()
 
 ################################################################################
 # END OF MAIN PROGRAM                                                          #

@@ -22,10 +22,23 @@ class QUANTRetailModel:
 
     ################################################################################
 
-    def calibrate(self):
-        #calibrate model
-        a=1
-    #end def calibrate
+    """
+    computeCBar
+    Compute average trip length TODO: VERY COMPUTATIONALLY INTENSIVE - FIX IT
+    @param Pij trips matrix containing the flow numbers between MSOA (i) and schools (j)
+    @param cij trip times between i and j
+    """
+    @staticmethod
+    def computeCBar(Pij,cij):
+        sum=0
+        denom=0
+        m,n = Pij.shape
+        for i in range(m):
+            for j in range(n):
+                sum+=Pij[i,j]*cij[i,j]
+                denom+=Pij[i,j]
+        cbar = sum/denom
+        return cbar
 
     ################################################################################
 
@@ -60,5 +73,24 @@ class QUANTRetailModel:
     #end def run
 
     ################################################################################
+
+    """
+    computeProbabilities
+    Compute the probability of a person travelling from a retail zone to all retail points
+    @param Sij retail flows matrix
+    @returns probSij, but with each set of MSOA flows to retail scaled to a probability
+    """
+    def computeProbabilities(self,Sij):
+        probSij = np.arange(self.m*self.n,dtype=np.float).reshape(self.m, self.n)
+        for i in range(self.m):
+            sum=np.sum(Sij[i,])
+            if sum<=0:
+                sum=1 #catch for divide by zero - just let the zero probs come through to the final matrix
+            probSij[i,]=Sij[i,]/sum
+        #end for
+        return probSij
+
+    ################################################################################
+
 
 #end class
