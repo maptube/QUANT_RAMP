@@ -13,9 +13,9 @@ from shapely.strtree import STRtree
 import csv
 
 from globals import *
-from utils import loadQUANTMatrix, loadCSV, loadMatrix, saveMatrix, zonecodeIndexData
+from utils import loadQUANTMatrix, loadMatrix, saveMatrix, zonecodeIndexData
 from zonecodes import ZoneCodes
-from databuilder import ensureFile
+from databuilder import ensureFile, changeGeography
 from databuilder import geocodeGeolytix, computeGeolytixCosts, buildSchoolsPopulationTableEnglandWales, buildSchoolsPopulationTableScotland
 from incometable import IncomeTable
 from attractions import attractions_msoa_floorspace_from_retail_points
@@ -44,8 +44,9 @@ ensureFile(os.path.join(modelRunsDir,QUANTCijRoadMinFilename),url_QUANTCijRoadMi
 #Now on to file creation
 
 #databuilder.py - run the code there...
-if not os.path.isfile(data_retailpoints_geocoded):
-    geocodeGeolytix()
+#NOT NEEDED - this was the old Geolytix file, which was geocoded to nearest MSOA and OA zone
+#if not os.path.isfile(data_retailpoints_geocoded):
+#    geocodeGeolytix()
 
 #make geolytix costs file which is a csv of origin to destination zone with a cost
 #computeGeolytixCosts()
@@ -67,6 +68,19 @@ if not os.path.isfile(data_schoolagepopulation):
     df3.to_csv(data_schoolagepopulation)
     #there, that's nice, england, wales and scotland all back together again
 
+###
+#Scotland IZ2011 to IZ2005 mapping
+changeGeography(
+    'external-data/geography/SG_DataZoneBdry_2011/SG_DataZone_Bdry_2011.shp',
+    'DataZone',
+    'external-data/geography/Scotland_IZ_2005Release/IZ_2011_EoR_Scotland.shp',
+    'msoa_iz',
+    'external-data/Census2011Modelled/SmallAreaIncomeEstimatesScotland.csv',
+    '2011 Data Zone code',
+    'Median Gross Household Income per week'
+    )
+###
+
 ################################################################################
 # End initialisation
 ################################################################################
@@ -80,25 +94,45 @@ if not os.path.isfile(data_schoolagepopulation):
 # Retail Model                                                                 #
 ################################################################################
 
-def runRetail():
+def runRetailModel():
     #load income data for MSOA residential zones
     #TODO: this will have to be by age in the next version
-    incomeTable = IncomeTable(os.path.join(modelRunsDir,onsModelBasedIncome2011))
-    Ei = incomeTable.getEi(zonecodes)
+    #incomeTable = IncomeTable(os.path.join(modelRunsDir,onsModelBasedIncome2011))
+    #Ei = incomeTable.getEi(zonecodes)
+    #Aj = attractions_msoa_floorspace_from_retail_points(zonecodes,retailPoints) #OLD MODEL
+
+    dfEi = pd.read_csv(os.path.join(modelRunsDir,onsModelBasedIncome2011))
+    retailPopulation = dfEi.join(other=zonecodes.set_index('areakey'),on='msoaiz') #WRONG!
 
     #load the Geolytix retail points file and make an attraction vector from the floorspace
-    retailPoints = loadCSV(data_retailpoints_geocoded)
-    Aj = attractions_msoa_floorspace_from_retail_points(zonecodes,retailPoints)
+    #retailPoints = loadCSV(data_retailpoints_geocoded)
+    retailZones, retailAttractors = QUANTRetailModel.loadGeolytixData(data_geolytix_supermarketattractivenenss)
+    retailZones.to_csv(data_retailpoints_zones)
+    retailAttractors.to_csv(data_retailpoints_attractors)
 
-    #calibrate - how?
-
-    m, n = cij.shape
+    if not os.path.isfile(data_retailpoints_cij):
+        retailpoints_cij = costMSOAToPoint(cij,retailZones) #this take a while
+        saveMatrix(retailpoints_cij, data_retailpoints_cij)
+    else:
+        retailpoints_cij = loadMatrix(data_retailpoints_cij)
+    
+    m, n = retailpoints_cij.shape
     model = QUANTRetailModel(m,n)
+    model.setAttractorsAj(retailAttractors,'zonei','Weekly TI')
+    #model.setPopulationVectorEi(Ei) #note overload to set Ei directly from the IncomeTable vector
+    model.setPopulation(dfEi,'')
+    model.setCostMatrixCij(retailpoints_cij)
     beta = 0.13 #from the QUANT calibration
-    Sij_a = model.run(beta,Aj,cij,Ei)
-    #TODO: what do you do with the data?
-    cbar = model.computeCBar(Sij_a,cij)
+
+    start = time.perf_counter()
+    Sij = model.run(beta)
+    end = time.perf_counter()
+    print("retail points model run elapsed time (secs)=",end-start)
+    cbar = model.computeCBar(Sij,retailpoints_cij)
     print("cbar=",cbar)
+
+    retailpoints_probSij = model.computeProbabilities(Sij)
+    saveMatrix(retailpoints_probSij,data_retailpoints_probSij)
 
 ################################################################################
 

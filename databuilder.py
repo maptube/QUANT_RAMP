@@ -327,3 +327,48 @@ def buildSchoolsPopulationTableScotland():
     df2.to_csv(data_schoolagepopulation_scotland)
 
 ################################################################################
+
+"""
+changeGeography
+Take data which is on geomInput and convert it to geomOutput by working out
+how much of each area in geomOutput is covered by areas in geomInput and
+doing a proportional area (in->out) on the data to work out a data value for
+the target area in geomOutput.
+@param geomInput Geometry input filename (shapefile)
+@param inAreaKeyAttrName Name of the attribute in the input shapefile containing the area key
+@param geomOutput Geometry output filename (shapefile) NOTE: we don't write out anything to this file!
+@param outAreaKeyAttrName Name of the attribute in the output shapefile contatining the area key
+@param datafile csv file with area codes that match "geomInput" and a column labelled "dataFieldName"
+@param dataAreaKeyFieldName
+@param dataFieldName the name of the field in "data" containing the data to be converted
+@returns a data frame with keycodes from geomOutput, but data from the original "data" file converted
+"""
+def changeGeography(geomInput,inAreaKeyAttrName,geomOutput,outAreaKeyAttrName,datafile,dataAreaKeyFieldName,dataFieldName):
+    gdfIn = gpd.read_file(geomInput)
+    gdfOut = gpd.read_file(geomOutput)
+    #todo: need a sanity check that they're in the same projection!
+    df = pd.read_csv(datafile)
+    for outPoly in gdfOut.itertuples(index = False):
+        #print("row=",outPoly)
+        #print("row area=",outPoly.geometry.area)
+        outAreaKey = getattr(outPoly, outAreaKeyAttrName)
+        fullArea = outPoly.geometry.area
+        #print("fullArea=",fullArea)
+        value = 0.0
+        for inPoly in gdfIn.itertuples(index=False): #so much for spatial indexing - bubblesort!
+            if (outPoly.geometry.intersects(inPoly.geometry)):
+                try:
+                    coverageGeom = outPoly.geometry.intersection(inPoly.geometry) #catch here?
+                    subAreaKey = getattr(inPoly,inAreaKeyAttrName)
+                    subData = df.loc[df[dataAreaKeyFieldName]==subAreaKey,dataFieldName].values[0]
+                    subArea = coverageGeom.area
+                    #print(subAreaKey, "data=", subData, "area=",subArea)
+                    value=value + subArea/fullArea*subData
+                except:
+                    print("Geometry error on "+outAreaKey)
+            #end if
+        #end for
+        print(outAreaKey+","+str(value))
+    #end for
+
+################################################################################

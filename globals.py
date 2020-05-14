@@ -12,6 +12,7 @@ modelRunsDir = "./model-runs"
 data_oa_shapefile = os.path.join(datadir_ex, "geography/infuse_oa_lyr_2011_clipped/infuse_oa_lyr_2011_clipped.shp")
 data_msoa_shapefile = os.path.join(datadir_ex, "geography/infuse_msoa_lyr_2011_clipped/infuse_msoa_lyr_2011_clipped.shp")
 data_geolytix_retailpoints = os.path.join(datadir_ex,"Geolytix/GEOLYTIX - RetailPoints/geolytix_retailpoints_v15_202001.csv")
+data_geolytix_supermarketattractivenenss = os.path.join(datadir_ex,"Geolytix/Supermarket Attractiveness Feb 2019.csv")
 #data_schools_ewprimary = os.path.join(datadir_ex,"OSF_RAMPUrbanAnalytics/primary_ew.csv")
 #data_schools_ewsecondary = os.path.join(datadir_ex,"OSF_RAMPUrbanAnalytics/secondary_ew.csv")
 data_schools_ews_primary = os.path.join(datadir_ex,"OSF_RAMPUrbanAnalytics/primary_ews.csv")
@@ -19,9 +20,17 @@ data_schools_ews_secondary = os.path.join(datadir_ex,"OSF_RAMPUrbanAnalytics/sec
 data_census_QS103 = os.path.join(datadir_ex,"Census2011/MSOA/QS103EW_MSOA.csv")
 data_census_QS103SC = os.path.join(datadir_ex,"Census2011/MSOA/QS103SC_DZ2001.csv")
 lookup_DZ2001_to_IZ2001 = os.path.join(datadir_ex,"Census2011/MSOA/DZ2001Lookup.csv")
+##
+
 #output files
-data_retailpoints_geocoded = os.path.join(modelRunsDir,"retailpoints_geocoded.csv")
-data_retailpoints_msoa_costs = os.path.join(modelRunsDir,"retailpoints_msoa_Cij_road_min.csv")
+#old data_retailpoints_geocoded = os.path.join(modelRunsDir,"retailpoints_geocoded.csv")
+#old data_retailpoints_msoa_costs = os.path.join(modelRunsDir,"retailpoints_msoa_Cij_road_min.csv")
+#
+data_retailpoints_cij = os.path.join(modelRunsDir,"retailpointsCij.bin")
+data_retailpoints_zones = os.path.join(modelRunsDir,"retailpointsZones.csv")
+data_retailpoints_attractors = os.path.join(modelRunsDir,"retailpointsAttractors.csv")
+data_retailpoints_probSij = os.path.join(modelRunsDir,"retailpointsProbSij.bin")
+##
 data_schoolagepopulation_englandwales = os.path.join(modelRunsDir,"schoolagepopulation_englandwales_msoa.csv")
 data_schoolagepopulation_scotland = os.path.join(modelRunsDir,"schoolagepopulation_scotland_iz.csv")
 data_schoolagepopulation = os.path.join(modelRunsDir,"schoolagepopulation_englandwalesscotland_msoaiz.csv")

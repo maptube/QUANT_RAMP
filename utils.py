@@ -180,25 +180,26 @@ def resizeMatrix(matrix,N):
 ###############################################################################
 
 """
+DEPRECATED - shouldn't need this?
 loadCSV
 Load a csv file into a list of rows where each row contains a map of the column name and data value
 @param filename The csv filename to load in - requires column names in row 1
 @returns [ {colA:data, colB:data, colC:data}, {colA:data, colB:data, colC:data}, ... for every row]
 """
-def loadCSV(filename):
-    csv_data = []
-    with open(filename,'r') as f:
-        reader = csv.reader(f,delimiter=',',quotechar='"')
-        header = next(reader)
-        cnames = {}
-        for idx,cname in enumerate(header):
-            cnames[idx]=cname
-        for row in reader:
-            named_row = {}
-            for idx, data in enumerate(row):
-                named_row[cnames[idx]]=data
-            csv_data.append(named_row)
-    return csv_data
+#def loadCSV(filename):
+#    csv_data = []
+#    with open(filename,'r') as f:
+#        reader = csv.reader(f,delimiter=',',quotechar='"')
+#        header = next(reader)
+#        cnames = {}
+#        for idx,cname in enumerate(header):
+#            cnames[idx]=cname
+#        for row in reader:
+#            named_row = {}
+#            for idx, data in enumerate(row):
+#                named_row[cnames[idx]]=data
+#            csv_data.append(named_row)
+#    return csv_data
 
 ###############################################################################
 

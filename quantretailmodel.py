@@ -5,8 +5,11 @@ Build a retail model for QUANT
 
 import numpy as np
 from numpy import exp
+import pandas as pd
 
-class QUANTRetailModel:
+from quantlhmodel import QUANTLHModel
+
+class QUANTRetailModel(QUANTLHModel):
     #test=0
 
     """
@@ -16,79 +19,27 @@ class QUANTRetailModel:
     """
     def __init__(self,m,n):
         #constructor
-        self.m = m
-        self.n = n
+        super().__init__(m,n)
     #end def constructor
 
     ################################################################################
 
     """
-    computeCBar
-    Compute average trip length TODO: VERY COMPUTATIONALLY INTENSIVE - FIX IT
-    @param Pij trips matrix containing the flow numbers between MSOA (i) and schools (j)
-    @param cij trip times between i and j
+    loadGeolytixData
+    @param filename Name of file to load - this is the Geolytix restricted access data with
+    the floorspace and retail data
+    @returns DataFrame containing [key,zonei,east,north] and [zonei,weekly turnover]
     """
     @staticmethod
-    def computeCBar(Pij,cij):
-        sum=0
-        denom=0
-        m,n = Pij.shape
-        for i in range(m):
-            for j in range(n):
-                sum+=Pij[i,j]*cij[i,j]
-                denom+=Pij[i,j]
-        cbar = sum/denom
-        return cbar
-
-    ################################################################################
-
-    """
-    run Model run
-    TODO: this takes rather a long time to run on Python with this amount of data
-    @param Beta_a
-    @param Aj
-    @param cij
-    @param Ei_a
-    """
-    def run(self, Beta_a, Aj, cij, Ei_a):
-        #run model
-        #TODO: first attempt, take the age groups out
-        #it's really a separate model for each age group
-        #a=age group
-        #i=residential zone
-        #j=shopping centre
-        #Eia=expenditure available to shop at residential zone i by age group a
-        #Aj=attractor of supermarket
-        #Aj=FjLambda where the attractor is +ve power of floorspace
-        #cij=travel cost
-        #Betaa=scaling param
-        Sij_a = np.arange(self.m*self.n).reshape(self.m, self.n) #or np.zeros(N*N).reshape(N, N)
-        for i in range(self.m):
-            denom = 0
-            for j in range(self.n):
-                denom = denom + Aj[j]*exp(-Beta_a*cij[i,j])
-            for j in range(self.n):
-                Sij_a[i,j] = Ei_a[i] * (Aj[j]*exp(-Beta_a*cij[i,j]))/denom
-        return Sij_a
-    #end def run
-
-    ################################################################################
-
-    """
-    computeProbabilities
-    Compute the probability of a person travelling from a retail zone to all retail points
-    @param Sij retail flows matrix
-    @returns probSij, but with each set of MSOA flows to retail scaled to a probability
-    """
-    def computeProbabilities(self,Sij):
-        probSij = np.arange(self.m*self.n,dtype=np.float).reshape(self.m, self.n)
-        for i in range(self.m):
-            sum=np.sum(Sij[i,])
-            if sum<=0:
-                sum=1 #catch for divide by zero - just let the zero probs come through to the final matrix
-            probSij[i,]=Sij[i,]/sum
-        #end for
-        return probSij
+    def loadGeolytixData(filename):
+        missing_values = ['-', 'n/a', 'na', '--', ' -   '] #yes, really, it's space - space space...
+        df = pd.read_csv(filename,usecols=['gluid','fascia','modelled sq ft','Weekly TI','bng_e','bng_n'], na_values=missing_values)
+        df.dropna(axis=0,inplace=True)
+        df.reset_index(drop=True,inplace=True) #IMPORTANT, otherwise indexes remain for ALL the rows i.e. idx=0..OriginalN NOT true row count!
+        dfzones = pd.DataFrame({'gluid':df.gluid,'zonei':df.index,'east':df.bng_e,'north':df.bng_n})
+        dfattractors = pd.DataFrame({'zonei':df.index,'Weekly TI':df['Weekly TI']}) #could also used floorspace
+        print(dfattractors)
+        return dfzones, dfattractors
 
     ################################################################################
 

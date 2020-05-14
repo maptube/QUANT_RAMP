@@ -31,6 +31,9 @@ primary_probPij = loadMatrix('model-runs/primaryProbPij.bin')
 dfSecondaryPopulation = pd.read_csv('model-runs/secondaryPopulation.csv')
 dfSecondaryZones = pd.read_csv('model-runs/secondaryZones.csv')
 secondary_probPij = loadMatrix('model-runs/secondaryProbPij.bin')
+#onsModelBasedIncome2011
+dfRetailPointsZones = pd.read_csv('model-runs/retailpointsZones.csv')
+retailpoints_probSij = loadMatrix('model-runs/retailpointsProbSij.bin')
 
 
 ################################################################################
@@ -100,8 +103,30 @@ def getProbableSecondarySchoolsByMSOAIZ(msoa_iz,threshold):
 ################################################################################
 
 """
-TODO: retail version
+getProbableSecondarySchoolsByMSOAIZ
+Given an MSOA area code (England and Wales) or an Intermediate Zone (IZ) 2001 code (Scotland), return
+a list of all the surrounding secondary schools whose probabilty of being visited by the MSOA_IZ is
+greater than or equal to the threshold.
+School ids are taken from the Edubase list of URN
+NOTE: code identical to the primary school version, only with switched lookup tables
+@param msoa_iz An MSOA code (England/Wales e.g. E02000001) or an IZ2001 code (Scotland e.g. S02000001)
+@param threshold Probability threshold e.g. 0.5 means return all possible retail points with probability>=0.5
+@returns a list of [ {id: 'retailid1', p: 0.5}, {id: 'retailid2', p:0.6}, ... etc] (NOTE: not sorted in any particular order)
 """
+def getProbableRetailByMSOAIZ(msoa_iz,threshold):
+    result = []
+    #onsModelBasedIncome2011
+    zonei = int(dfRetailPointsPopulation.loc[dfRetailPointsPopulation['msoaiz'] == msoa_iz, 'zonei'])
+    m,n = retailpoints_probSij.shape
+    for j in range(n):
+        p = retailpoints_probSij[zonei,j]
+        if p>=threshold:
+            row2 = dfRetailPointsZones.loc[dfRetailPointsZones['zonei'] == j] #yes, zonei==j is correct, they're always called 'zonei'
+            id = row2['URN'].values[0]
+            result.append({'id':id, 'p':p})
+        #end if
+    #end for
+    return result
 
 ################################################################################
 

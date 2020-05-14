@@ -45,16 +45,16 @@ class IncomeTable:
 
     """
     getEi The main use of this class - get a vector of income data for use in the model
-    @param zonecodes the object containing the zone data linking the MSOA code to the zone i number
+    @param zonecodes the dataframe object containing the zone data linking the MSOA code to the zone i number
     @returns a vector of income, one for each MSOA, suitable for using in the model
 
     """
     def getEi(self,zonecodes):
-        N = len(zonecodes.dt)
-        Ei = np.zeros(N)
+        N = len(zonecodes)
+        Ei = np.zeros(N,dtype=float)
         for msoa in self.incomeByMSOA:
             income = self.incomeByMSOA[msoa]
-            zonei = zonecodes.dt[msoa]['zonei']
+            zonei = zonecodes.loc[zonecodes['areakey'] == msoa, 'zonei'].values[0]
             Ei[zonei]=income
         #end for
         return Ei
