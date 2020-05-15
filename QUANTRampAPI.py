@@ -31,7 +31,7 @@ primary_probPij = loadMatrix('model-runs/primaryProbPij.bin')
 dfSecondaryPopulation = pd.read_csv('model-runs/secondaryPopulation.csv')
 dfSecondaryZones = pd.read_csv('model-runs/secondaryZones.csv')
 secondary_probPij = loadMatrix('model-runs/secondaryProbPij.bin')
-#onsModelBasedIncome2011
+dfRetailPointsPopulation = pd.read_csv('model-runs/retailpointsPopulation.csv')
 dfRetailPointsZones = pd.read_csv('model-runs/retailpointsZones.csv')
 retailpoints_probSij = loadMatrix('model-runs/retailpointsProbSij.bin')
 
@@ -122,7 +122,7 @@ def getProbableRetailByMSOAIZ(msoa_iz,threshold):
         p = retailpoints_probSij[zonei,j]
         if p>=threshold:
             row2 = dfRetailPointsZones.loc[dfRetailPointsZones['zonei'] == j] #yes, zonei==j is correct, they're always called 'zonei'
-            id = row2['URN'].values[0]
+            id = row2['gluid'].values[0]
             result.append({'id':id, 'p':p})
         #end if
     #end for

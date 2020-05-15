@@ -70,15 +70,15 @@ if not os.path.isfile(data_schoolagepopulation):
 
 ###
 #Scotland IZ2011 to IZ2005 mapping
-changeGeography(
-    'external-data/geography/SG_DataZoneBdry_2011/SG_DataZone_Bdry_2011.shp',
-    'DataZone',
-    'external-data/geography/Scotland_IZ_2005Release/IZ_2011_EoR_Scotland.shp',
-    'msoa_iz',
-    'external-data/Census2011Modelled/SmallAreaIncomeEstimatesScotland.csv',
-    '2011 Data Zone code',
-    'Median Gross Household Income per week'
-    )
+#changeGeography(
+#    'external-data/geography/SG_DataZoneBdry_2011/SG_DataZone_Bdry_2011.shp',
+#    'DataZone',
+#    'external-data/geography/Scotland_IZ_2005Release/IZ_2011_EoR_Scotland.shp',
+#    'msoa_iz',
+#    'external-data/Census2011Modelled/SmallAreaIncomeEstimatesScotland.csv',
+#    '2011 Data Zone code',
+#    'Median Gross Household Income per week'
+#    )
 ###
 
 ################################################################################
@@ -101,8 +101,9 @@ def runRetailModel():
     #Ei = incomeTable.getEi(zonecodes)
     #Aj = attractions_msoa_floorspace_from_retail_points(zonecodes,retailPoints) #OLD MODEL
 
-    dfEi = pd.read_csv(os.path.join(modelRunsDir,onsModelBasedIncome2011))
-    retailPopulation = dfEi.join(other=zonecodes.set_index('areakey'),on='msoaiz') #WRONG!
+    dfEi = pd.read_csv(data_ewsModelBasedIncome)
+    retailPopulation = dfEi.join(other=zonecodes.set_index('areakey'),on='msoaiz') #this codes dfEi by zonei
+    retailPopulation.to_csv(data_retailpoints_population)
 
     #load the Geolytix retail points file and make an attraction vector from the floorspace
     #retailPoints = loadCSV(data_retailpoints_geocoded)
@@ -111,7 +112,7 @@ def runRetailModel():
     retailAttractors.to_csv(data_retailpoints_attractors)
 
     if not os.path.isfile(data_retailpoints_cij):
-        retailpoints_cij = costMSOAToPoint(cij,retailZones) #this take a while
+        retailpoints_cij = costMSOAToPoint(cij,retailZones) #this takes a while
         saveMatrix(retailpoints_cij, data_retailpoints_cij)
     else:
         retailpoints_cij = loadMatrix(data_retailpoints_cij)
@@ -120,7 +121,7 @@ def runRetailModel():
     model = QUANTRetailModel(m,n)
     model.setAttractorsAj(retailAttractors,'zonei','Weekly TI')
     #model.setPopulationVectorEi(Ei) #note overload to set Ei directly from the IncomeTable vector
-    model.setPopulation(dfEi,'')
+    model.setPopulationEi(retailPopulation,'zonei','Total weekly income (£)')
     model.setCostMatrixCij(retailpoints_cij)
     beta = 0.13 #from the QUANT calibration
 

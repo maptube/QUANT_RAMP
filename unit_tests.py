@@ -6,6 +6,7 @@
 ################################################################################
 
 from QUANTRampAPI import getProbablePrimarySchoolsByMSOAIZ, getProbableSecondarySchoolsByMSOAIZ
+from QUANTRampAPI import getProbableRetailByMSOAIZ
 
 """
 Test of retrieving data from the API for primary school probability.
@@ -28,7 +29,6 @@ def testPrimarySchools():
 
 ################################################################################
 
-#TODO: secondary school tests
 def testSecondarySchools():
     print("testSecondarySchools:: running test 1, prob =0.002")
     schools = getProbableSecondarySchoolsByMSOAIZ('E02000001',0.002)
@@ -40,10 +40,16 @@ def testSecondarySchools():
     schools = getProbableSecondarySchoolsByMSOAIZ('S02000530',0.002)
     print(schools)
 
+################################################################################
+def testRetailPoints():
+    print("testRetailPoints:: running test 1, prob =0.002")
+    retailpoints = getProbableRetailByMSOAIZ('E02000001',0.002)
+    print(retailpoints)
 
 ################################################################################
 # MAIN PROGRAM                                                                 #
 ################################################################################
 
 #testPrimarySchools()
-testSecondarySchools()
+#testSecondarySchools()
+testRetailPoints()

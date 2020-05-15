@@ -20,6 +20,9 @@ data_schools_ews_secondary = os.path.join(datadir_ex,"OSF_RAMPUrbanAnalytics/sec
 data_census_QS103 = os.path.join(datadir_ex,"Census2011/MSOA/QS103EW_MSOA.csv")
 data_census_QS103SC = os.path.join(datadir_ex,"Census2011/MSOA/QS103SC_DZ2001.csv")
 lookup_DZ2001_to_IZ2001 = os.path.join(datadir_ex,"Census2011/MSOA/DZ2001Lookup.csv")
+#income
+#onsModelBasedIncome2011 = 'ons-model-based-income-estimates-msoa_2011-12-weekly-income.csv'
+data_ewsModelBasedIncome = os.path.join(datadir_ex,"Census2011Modelled/ews_model-based-income.csv") #this comes from merging the file above with Scotland data changed to IZ2005
 ##
 
 #output files
@@ -29,6 +32,7 @@ lookup_DZ2001_to_IZ2001 = os.path.join(datadir_ex,"Census2011/MSOA/DZ2001Lookup.
 data_retailpoints_cij = os.path.join(modelRunsDir,"retailpointsCij.bin")
 data_retailpoints_zones = os.path.join(modelRunsDir,"retailpointsZones.csv")
 data_retailpoints_attractors = os.path.join(modelRunsDir,"retailpointsAttractors.csv")
+data_retailpoints_population = os.path.join(modelRunsDir,"retailpointsPopulation.csv")
 data_retailpoints_probSij = os.path.join(modelRunsDir,"retailpointsProbSij.bin")
 ##
 data_schoolagepopulation_englandwales = os.path.join(modelRunsDir,"schoolagepopulation_englandwales_msoa.csv")
@@ -65,5 +69,3 @@ CijRoadMinFilename = 'Cij_road_min.bin'
 #centroids for the cost matrices
 QUANTCijRoadCentroidsFilename = 'roadcentroidlookup_QC.csv'
 
-#income
-onsModelBasedIncome2011 = 'ons-model-based-income-estimates-msoa_2011-12-weekly-income.csv'
