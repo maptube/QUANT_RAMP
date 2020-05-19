@@ -16,7 +16,8 @@ from globals import *
 from utils import loadQUANTMatrix, loadMatrix, saveMatrix, zonecodeIndexData
 from zonecodes import ZoneCodes
 from databuilder import ensureFile, changeGeography
-from databuilder import geocodeGeolytix, computeGeolytixCosts, buildSchoolsPopulationTableEnglandWales, buildSchoolsPopulationTableScotland
+from databuilder import geolytixRegression, geocodeGeolytix, computeGeolytixCosts
+from databuilder import buildSchoolsPopulationTableEnglandWales, buildSchoolsPopulationTableScotland
 from incometable import IncomeTable
 from attractions import attractions_msoa_floorspace_from_retail_points
 from quantretailmodel import QUANTRetailModel
@@ -41,6 +42,7 @@ ensureFile(os.path.join(modelRunsDir,QUANTCijRoadMinFilename),url_QUANTCijRoadMi
 #todo: geolytics?
 #todo: osf schools data
 
+################################################################################
 #Now on to file creation
 
 #databuilder.py - run the code there...
@@ -50,6 +52,12 @@ ensureFile(os.path.join(modelRunsDir,QUANTCijRoadMinFilename),url_QUANTCijRoadMi
 
 #make geolytix costs file which is a csv of origin to destination zone with a cost
 #computeGeolytixCosts()
+
+#databuilder.py - use regression to add floorspace data and regression turnover data to the open Geolytix data
+#NOTE: the result of dong this is the regression file, which contains RESTRICTED Geolytix data and so is
+#itself RESTRICTED DATA!
+if not os.path.isfile(data_restricted_geolytix_regression):
+    geolytixRegression(data_restricted_geolytix_supermarketattractivenenss,data_geolytix_retailpoints,data_restricted_geolytix_regression)
 
 #databuilder.py - build schools population table if needed - requires QS103 AND QS103SC on DZ2001 for Scotland
 if not os.path.isfile(data_schoolagepopulation_englandwales):
@@ -107,7 +115,7 @@ def runRetailModel():
 
     #load the Geolytix retail points file and make an attraction vector from the floorspace
     #retailPoints = loadCSV(data_retailpoints_geocoded)
-    retailZones, retailAttractors = QUANTRetailModel.loadGeolytixData(data_geolytix_supermarketattractivenenss)
+    retailZones, retailAttractors = QUANTRetailModel.loadGeolytixData(data_restricted_geolytix_regression)
     retailZones.to_csv(data_retailpoints_zones)
     retailAttractors.to_csv(data_retailpoints_attractors)
 
@@ -119,7 +127,7 @@ def runRetailModel():
     
     m, n = retailpoints_cij.shape
     model = QUANTRetailModel(m,n)
-    model.setAttractorsAj(retailAttractors,'zonei','Weekly TI')
+    model.setAttractorsAj(retailAttractors,'zonei','Modelled turnover annual')
     #model.setPopulationVectorEi(Ei) #note overload to set Ei directly from the IncomeTable vector
     model.setPopulationEi(retailPopulation,'zonei','Total weekly income (£)')
     model.setCostMatrixCij(retailpoints_cij)

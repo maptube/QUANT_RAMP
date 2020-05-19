@@ -122,7 +122,7 @@ def getProbableRetailByMSOAIZ(msoa_iz,threshold):
         p = retailpoints_probSij[zonei,j]
         if p>=threshold:
             row2 = dfRetailPointsZones.loc[dfRetailPointsZones['zonei'] == j] #yes, zonei==j is correct, they're always called 'zonei'
-            id = row2['gluid'].values[0]
+            id = row2['id'].values[0]
             result.append({'id':id, 'p':p})
         #end if
     #end for

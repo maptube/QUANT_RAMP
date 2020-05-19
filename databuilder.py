@@ -9,6 +9,7 @@ At the moment, it builds model-runs/retailpoints_geocoded.csv with oa geocoded G
 import os
 import wget
 import numpy as np
+from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 import pandas as pd
 import geopandas as gpd
@@ -273,6 +274,70 @@ def computeGeolytixCosts():
     #end with (writer)
 
 ################################################################################
+
+"""
+geolytixRegression
+Yet another function mangling the Geolytix data into something else. This time it's
+to take the restricted file containing the floorspace and annual takings data that
+we got directly from them and aren't allowed to release and merge it into the
+open data. This is done by doing a linear regression of "modelled sq ft" to
+"Modelled turnover annual" on the restricted data and then applying that to
+the open data with the four levels of floorspace in order to estimate
+annual turnover. It's probably a really bad guess, but then it's retail data.
+Regression model is a scikit linear regression class.
+@param inRestrictedFilename
+@param inOpenDataFilename
+@param outGeolytixRegression
+"""
+def geolytixRegression(inRestrictedFilename,inOpenDataFilename,outGeolytixRegression):
+    dfRestricted = pd.read_csv(inRestrictedFilename)
+    # doing this very naively, take the "modelled sq ft" column and use it to
+    # predict "Modelled turnover annual"
+    x = np.array(dfRestricted['modelled sq ft'].tolist()).reshape(-1,1) #it's an nx1 array of 1d data
+    y = np.array(dfRestricted['Modelled turnover annual'].tolist())
+    model = LinearRegression().fit(x,y)
+    print('dataBuilder::geolytixRegression:: model.score = ',model.score(x,y))
+    #y_new = model.predict(new_x)
+    #TODO: can you print out the model params here?
+
+    #using our new found ability to predict annual turnover from floorspace,
+    #go through all the open data, drop in the real data from the restricted
+    #file where the unique ids match, or use the regression model to fill in
+    #the turnover from the approximate floorspace range otherwise.
+    dfOpen = pd.read_csv(inOpenDataFilename)
+
+    #id,retailer,fascia,store_name,add_one,add_two,town,suburb,postcode,long_wgs,lat_wgs,bng_e,bng_n,pqi,open_date,size_band
+    #1010004593,Tesco,Tesco Express,Tesco Eastern Seaside Road Express,133-135 Seaside Road,,Eastbourne,Meads,BN21 3PA,0.293276318,50.76901815,561808.4009,99110.41946,Rooftop geocoded by Geolytix,,"< 3,013 ft2 (280m2)"
+    #size bands: "< 3,013 ft2 (280m2)" "15,069 < 30,138 ft2 (1,400 < 2,800 m2)" "3,013 < 15,069 ft2 (280 < 1,400 m2)" "30,138 ft2 > (2,800 m2)"
+    medianSizeBands = {
+        "< 3,013 ft2 (280m2)": 1506.5,
+        "3,013 < 15,069 ft2 (280 < 1,400 m2)": 9041.0,
+        "15,069 < 30,138 ft2 (1,400 < 2,800 m2)": 22603.5,
+        "30,138 ft2 > (2,800 m2)": 30138.0
+    }
+    dfOpen['modelled sq ft'] = [ medianSizeBands[f] for f in dfOpen['size_band'] ] #that fills a new sq ft column with approx sizes
+    #now take real sq ft sizes from the restricted data where ids match - CAN SKIP this stage if restricted data not available
+    #NOTE: key on restricted data is 'gluid', while on open data it's 'id'
+    #this is the easy way to do it - make the accurate data into a dict [gluid,value], then iterate replace cells in the open data
+    dict_accurate_floorspace = dfRestricted.set_index('gluid').to_dict()['modelled sq ft'] #key is gluid
+    for f in dict_accurate_floorspace:
+        dfOpen.loc[dfOpen['id']==f, 'modelled sq ft'] = dict_accurate_floorspace[f] #key is id
+    #OK, that's sorted the floorspace, now put in a modelled turnover column
+    #use the regression model to fill in first
+    dfOpen['Modelled turnover annual'] = [model.predict(np.array(x).reshape(-1,1))[0] for x in dfOpen['modelled sq ft'] ]
+    #now take the real turnover figures from the restricted data where ids match - CAN SKIP this stage if restricted data not available
+    dict_accurate_turnover = dfRestricted.set_index('gluid').to_dict()['Modelled turnover annual'] #key is gluid
+    for t in dict_accurate_turnover:
+        dfOpen.loc[dfOpen['id']==t, 'Modelled turnover annual'] = dict_accurate_turnover[t] #key is id
+    #dfOpen['Modelled turnover annual'] = [ (dict_accurate_turnover if i in dict_accurate_turnover else dfOpen['Modelled turnover annual'] ) for i in dfOpen['id'] ]
+    #And that's all there is, except to point out that there could be gluids in the restricted file that aren't in the open data - ignoring the
+    #extras for now - I did find the odd one, but then there are 16,000 retail points here
+
+    #and save...
+    dfOpen.to_csv(outGeolytixRegression)
+
+################################################################################
+
 
 """
 buildSchoolsPopulationTable
