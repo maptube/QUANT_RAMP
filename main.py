@@ -18,10 +18,12 @@ from zonecodes import ZoneCodes
 from databuilder import ensureFile, changeGeography
 from databuilder import geolytixRegression, geocodeGeolytix, computeGeolytixCosts
 from databuilder import buildSchoolsPopulationTableEnglandWales, buildSchoolsPopulationTableScotland
+from databuilder import buildTotalPopulationTable
 from incometable import IncomeTable
 from attractions import attractions_msoa_floorspace_from_retail_points
 from quantretailmodel import QUANTRetailModel
 from quantschoolsmodel import QUANTSchoolsModel
+from quanthospitalsmodel import QUANTHospitalsModel
 from costs import costMSOAToPoint
 
 ################################################################################
@@ -75,6 +77,12 @@ if not os.path.isfile(data_schoolagepopulation):
     df3 = df1.append(df2)
     df3.to_csv(data_schoolagepopulation)
     #there, that's nice, england, wales and scotland all back together again
+
+#same thing for the total population of England, Scotland and Wales - needed for hospitals
+#now join total population for England/Wales and Scotland files together
+if not os.path.isfile(data_totalpopulation):
+    buildTotalPopulationTable()
+
 
 ###
 #Scotland IZ2011 to IZ2005 mapping
@@ -237,6 +245,52 @@ def runSchoolsModel():
     #cbar= 16.5250843880515, beta=0.13 correct EWS
 ##
 
+################################################################################
+
+
+################################################################################
+# Hospitals Model                                                              #
+################################################################################
+
+def runHospitalsModel():
+    print("runHospitalsModel")
+    #hospitals model
+    #load hospitals population
+    hospitalZones, hospitalAttractors = QUANTHospitalsModel.loadHospitalsData(data_hospitals)
+    row,col = hospitalZones.shape
+    print("hospitalZones count =",row)
+    print("hospitalZones max = ",hospitalZones.max(axis=0))
+    hospitalZones.to_csv(data_hospital_zones)
+    hospitalAttractors.to_csv(data_hospital_attractors)
+    hospitalPopMSOA = pd.read_csv(data_totalpopulation,usecols=['msoaiz','count_allpeople']) #this is the census total count of people
+    #print(hospitalPopMSOA.head())
+    hospitalPopulation = hospitalPopMSOA.join(other=zonecodes.set_index('areakey'),on='msoaiz') #zone with the zone codes to add zonei col
+    #print(hospitalPopulation.head())
+    hospitalPopulation.to_csv(data_hospital_population)
+
+    if not os.path.isfile(data_hospital_cij):
+        hospital_cij = costMSOAToPoint(cij,hospitalZones) #this takes an hour
+        saveMatrix(hospital_cij, data_hospital_cij)
+    else:
+        hospital_cij = loadMatrix(data_hospital_cij)
+    m, n = hospital_cij.shape
+    model = QUANTHospitalsModel(m,n)
+    model.setAttractorsAj(hospitalAttractors,'zonei','floor_area_m2')
+    model.setPopulationEi(hospitalPopulation,'zonei','count_allpeople')
+    model.setCostMatrixCij(hospital_cij)
+    beta = 0.13 #from the QUANT calibration
+    #note: you can also transform the attactors
+    #Hij = hospital flows
+    start = time.perf_counter()
+    hospital_Hij = model.run(beta)
+    end = time.perf_counter()
+    print("hospitals school model run elapsed time (secs)=",end-start)
+    cbar = model.computeCBar(hospital_Hij,hospital_cij)
+    print("cbar=",cbar)
+
+    hospital_probHij = model.computeProbabilities(hospital_Hij)
+    saveMatrix(hospital_probHij,data_hospital_probHij)
+
 
 ################################################################################
 
@@ -253,8 +307,9 @@ zonecodes.set_index('areakey')
 cij = loadQUANTMatrix(os.path.join(modelRunsDir,QUANTCijRoadMinFilename))
 
 #now run the relevant models to produce the outputs
-runRetailModel()
+#runRetailModel()
 #runSchoolsModel()
+runHospitalsModel()
 
 ################################################################################
 # END OF MAIN PROGRAM                                                          #

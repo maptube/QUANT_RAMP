@@ -25,6 +25,8 @@ lookup_DZ2001_to_IZ2001 = os.path.join(datadir_ex,"Census2011/MSOA/DZ2001Lookup.
 #onsModelBasedIncome2011 = 'ons-model-based-income-estimates-msoa_2011-12-weekly-income.csv'
 data_ewsModelBasedIncome = os.path.join(datadir_ex,"Census2011Modelled/ews_model-based-income.csv") #this comes from merging the file above with Scotland data changed to IZ2005
 ##
+data_hospitals = os.path.join(datadir_ex,"OSF_RAMPUrbanAnalytics/NHS Estates Information/NHS_join_mod.csv") #data on hospitals in England
+
 
 #output files
 #old data_retailpoints_geocoded = os.path.join(modelRunsDir,"retailpoints_geocoded.csv")
@@ -49,6 +51,13 @@ data_secondary_zones = os.path.join(modelRunsDir,"secondaryZones.csv")
 data_secondary_attractors = os.path.join(modelRunsDir,"secondaryAttractors.csv")
 data_secondary_population = os.path.join(modelRunsDir,"secondaryPopulation.csv")
 data_secondary_probPij = os.path.join(modelRunsDir,"secondaryProbPij.bin")
+##
+data_totalpopulation = os.path.join(modelRunsDir,"totalpopulation_englandwalesscotland_msoaiz.csv") #this is QS103 col All People joined for E+W+S
+data_hospital_cij = os.path.join(modelRunsDir,"hospitalCij.csv")
+data_hospital_zones = os.path.join(modelRunsDir,"hospitalZones.csv")
+data_hospital_attractors = os.path.join(modelRunsDir,"hospitalAttractors.csv")
+data_hospital_population = os.path.join(modelRunsDir,"hospitalPopulation.csv")
+data_hospital_probHij = os.path.join(modelRunsDir,"hospitalProbHij.bin")
 ################################################################################
 #these are download urls for big external data that can't go in the GitHub repo
 url_QUANTCijRoadMinFilename = "https://liveuclac-my.sharepoint.com/:u:/g/personal/ucfnrmi_ucl_ac_uk/EZd4HZVVHd1OuZ_Qj3uKGNcBSe_OoG6unjrVbAyRvGquaQ?e=LxuwMv"

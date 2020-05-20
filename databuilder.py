@@ -394,6 +394,40 @@ def buildSchoolsPopulationTableScotland():
 ################################################################################
 
 """
+buildTotalPopulationTable
+Takes the QS103 age structure and merges the England/Wales and Scotland data together.
+The added complication is that Scotland is on DZ2001 boundaries, so you have to group.
+NOTE: this is basically a merge of the england and scotland version of the school age
+population table creation above. Only it's only using a single total people column.
+POST: writes out data_totalpopulation
+"""
+def buildTotalPopulationTable():
+    #England and Wales
+    dfEW = pd.read_csv(data_census_QS103)
+    dfEW['count_allpeople'] = dfEW['Age: All categories: Age; measures: Value'] # OK, you could just rename the col, not copy
+    dfEW2 = pd.DataFrame({'geography code': dfEW['geography code'], 'count_allpeople': dfEW['count_allpeople']})
+    print("dfEW2 cols=",dfEW2.columns)
+    
+    #Scotland (DZ2001)
+    dfS = pd.read_csv(data_census_QS103SC) #join on "Unnamed: 0", it's blank! This is the datazone code field
+    dfS.set_index('Unnamed: 0')
+    dfSLookup = pd.read_csv(lookup_DZ2001_to_IZ2001) #join on ZONECODE, which is the datazone code
+    dfS = dfS.join(other=dfSLookup.set_index('ZONECODE'),on='Unnamed: 0')
+    dfS['count_allpeople'] = dfS['All people']
+    dfS2 = dfS.groupby(['IZ_CODE']).agg({'count_allpeople': "sum"})
+    dfS3 = pd.DataFrame({'msoaiz': dfS2.index, 'count_allpeople': dfS2['count_allpeople'] }) #cols are weird is you don't do this - dfS2 has iz as the index and we need a col
+    #NOTE: I deleted the line in the Scotland QS103SC file which contains the total for the whole of Scotland - it's a pain
+
+    #now merge dfEW2 and dfS3 into one table
+    dfEW2.reset_index()
+    dfS3.reset_index()
+    dfEW2.columns=['msoaiz','count_allpeople']
+    dfEWS = dfEW2.append(dfS3)
+    dfEWS.to_csv(data_totalpopulation,index=False) #drop the index col off as EW has a numberic row id and scot has idx=IZ code - why on earth????
+
+################################################################################
+
+"""
 changeGeography
 Take data which is on geomInput and convert it to geomOutput by working out
 how much of each area in geomOutput is covered by areas in geomInput and
