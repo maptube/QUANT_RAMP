@@ -1,8 +1,23 @@
 """
 QUANT_RAMP
 main.py
-"""
 
+27 May 2020
+Author: Richard Milton, Centre for Advanced Spatial Analysis, University College London
+https://www.casa.ucl.ac.uk
+Funded by the Alan Turing Institute for Data Science and Artificial Intelligence
+https://www.turing.ac.uk/
+
+Repository: https://github.com/maptube/QUANT_RAMP
+Licence: read the licence file.
+
+This project was written for the RAMP Covid 19 effort to create a model of probabilities
+for visitors to point locations originating from MSOA zones. All data relating to the
+population comes from the 2011 census e.g. age structure and financial data. The point
+locations are taken to be retail, primary schools, secondary schools or hospitals.
+This model is an MSOA zone to point location model based on CASA and the Alan Turing
+Institute's QUANT2 model.
+"""
 import os
 import time
 import matplotlib.pyplot as plt
