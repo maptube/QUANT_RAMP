@@ -7,7 +7,8 @@ TODO: this is supposed to collect and build all external data - using hand craft
 At the moment, it builds model-runs/retailpoints_geocoded.csv with oa geocoded Geolytix retail points
 """
 import os
-import wget
+#import wget
+import requests
 import numpy as np
 from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
@@ -33,7 +34,14 @@ remote sources so we don't check "official" data into the GitHub repo.
 def ensureFile(localFilename,url):
     if not os.path.isfile(localFilename):
         print("Downloading "+localFilename+" from "+url)
-        wget.download(url,localFilename)
+        #wget.download(url,localFilename) # won't allow headers to add user agent
+
+        #use requests module instead, which doesn't set the file info like wget does - datestamp wrong!
+
+        headers={'User-Agent': 'Mozilla/5.0'}
+        r = requests.get(url, allow_redirects=True, headers=headers)
+        open(localFilename, 'wb').write(r.content)
+
         
 ################################################################################
 

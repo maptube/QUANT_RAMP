@@ -379,9 +379,6 @@ zonecodes.set_index('areakey')
 
 #load cost matrix, time in minutes between MSOA zones
 cij = loadQUANTMatrix(os.path.join(modelRunsDir,QUANTCijRoadMinFilename))
-print('cij0,0',cij[0,0])
-print("cij0,1",cij[0,1])
-print("cij1,0",cij[1,0])
 
 #now run the relevant models to produce the outputs
 #runRetailModel()
