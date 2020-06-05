@@ -52,6 +52,10 @@ from costs import costMSOAToPoint
 #directory, then nothing new is created and this section is effectively
 #skipped, up until the model run section at the end.
 
+#make a model-runs dir if we need it
+if not os.path.exists(modelRunsDir):
+    os.makedirs(modelRunsDir)
+
 #Downloads first:
 
 #this will get us the big QUANT road travel times matrix
