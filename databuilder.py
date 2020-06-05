@@ -471,3 +471,57 @@ def changeGeography(geomInput,inAreaKeyAttrName,geomOutput,outAreaKeyAttrName,da
     #end for
 
 ################################################################################
+
+"""
+matchHospitalEpisodeData
+We have two tables for hospitals: the NHS site data and episodes and admissions data
+containing numbers for different age groups plus male/female. The hospital codes
+don't match.
+Attempt to match up one table to the other one based on the plain text name so that
+we can add the location code to the episode by age table.
+NOTE: the main site database has 1100 lines but the age table only has 470.
+"""
+def matchHospitalEpisodeData():
+    dfHospitals = pd.read_csv(data_hospitals) #NOTE: this isn't the full table but a subset
+    dfHospitalsAgeEpisodes = pd.read_csv(data_hospitalEpisodes)
+
+    #now, the codes don't match on these tables (great), so let's try a fuzzy match on names (!)
+
+    #the most obvious way of doing this is to load it all into memory rather than mess about
+    #iterating dataframes
+    hospitalNameList = dfHospitals['Site Name'].tolist()
+    hospitalNameList = [x.lower() for x in hospitalNameList]
+    bagOfWords = {}
+    for name in hospitalNameList:
+        words = name.split()
+        for word in words:
+            if word in bagOfWords:
+                bagOfWords[word]+=1
+            else:
+                bagOfWords[word]=1
+        #end for
+    #end for
+
+    #todo: do you need a normalise probs here?
+
+    #that gets us word probabilities, now let's try matching
+    for row in dfHospitalsAgeEpisodes.itertuples(index=False):
+        name1 = row.description.lower()
+        words1 = name1.split()
+        maxScore=0
+        maxName=''
+        for k in hospitalNameList:
+            score=0
+            words2 = k.split()
+            for w1 in words1: #not exactly elegant, bubble on w1,w2, but hash is probably overkill
+                for w2 in words2: #OK, I know it matches twice
+                    if (w1==w2):
+                        score=score+1/bagOfWords[w2]
+                #end for
+            #end for
+            if score>maxScore:
+                maxScore=score
+                maxName=words2
+        #end for
+        print(words1,'matches',maxName,maxScore)
+    #end for

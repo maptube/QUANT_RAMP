@@ -26,6 +26,7 @@ lookup_DZ2001_to_IZ2001 = os.path.join(datadir_ex,"Census2011/MSOA/DZ2001Lookup.
 data_ewsModelBasedIncome = os.path.join(datadir_ex,"Census2011Modelled/ews_model-based-income.csv") #this comes from merging the file above with Scotland data changed to IZ2005
 ##
 data_hospitals = os.path.join(datadir_ex,"OSF_RAMPUrbanAnalytics/NHS Estates Information/NHS_join_mod.csv") #data on hospitals in England
+data_hospitalEpisodes = os.path.join(datadir_ex,"hosp-epis-stat-admi-prov-2018-19-tab.csv") #data on admission stats by hospital and age
 
 
 #output files
@@ -37,6 +38,11 @@ data_retailpoints_zones = os.path.join(modelRunsDir,"retailpointsZones.csv")
 data_retailpoints_attractors = os.path.join(modelRunsDir,"retailpointsAttractors.csv")
 data_retailpoints_population = os.path.join(modelRunsDir,"retailpointsPopulation.csv")
 data_retailpoints_probSij = os.path.join(modelRunsDir,"retailpointsProbSij.bin")
+##
+data_populationretail_zones = os.path.join(modelRunsDir,"populationretailZones.csv")
+data_populationretail_attractors = os.path.join(modelRunsDir,"populationretailAttractors.csv")
+data_populationretail_population = os.path.join(modelRunsDir,"populationretailPopulation.csv")
+data_populationretail_probSij = os.path.join(modelRunsDir,"populationretailProbSij.bin")
 ##
 data_schoolagepopulation_englandwales = os.path.join(modelRunsDir,"schoolagepopulation_englandwales_msoa.csv")
 data_schoolagepopulation_scotland = os.path.join(modelRunsDir,"schoolagepopulation_scotland_iz.csv")

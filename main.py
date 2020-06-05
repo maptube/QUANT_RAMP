@@ -34,6 +34,7 @@ from databuilder import ensureFile, changeGeography
 from databuilder import geolytixRegression, geocodeGeolytix, computeGeolytixCosts
 from databuilder import buildSchoolsPopulationTableEnglandWales, buildSchoolsPopulationTableScotland
 from databuilder import buildTotalPopulationTable
+from databuilder import matchHospitalEpisodeData
 from incometable import IncomeTable
 from attractions import attractions_msoa_floorspace_from_retail_points
 from quantretailmodel import QUANTRetailModel
@@ -165,6 +166,48 @@ def runRetailModel():
 
     retailpoints_probSij = model.computeProbabilities(Sij)
     saveMatrix(retailpoints_probSij,data_retailpoints_probSij)
+
+################################################################################
+
+"""
+runPopulationRetailModel
+Same as runRetailModel, except that it now uses number of people in place of average income
+"""
+def runPopulationRetailModel():
+    dfPopMSOAPopulation = pd.read_csv(data_totalpopulation,usecols=['msoaiz','count_allpeople'])
+    popretailPopulation = dfPopMSOAPopulation.join(other=zonecodes.set_index('areakey'),on='msoaiz') #join with the zone codes to add zonei col
+    popretailPopulation.to_csv(data_populationretail_population)
+
+    #load the Geolytix retail points file and make an attraction vector from the floorspace - copied from runRetailModel
+    popretailZones, popretailAttractors = QUANTRetailModel.loadGeolytixData(data_restricted_geolytix_regression)
+    popretailZones.to_csv(data_populationretail_zones) #NOTE: saving largely for data completeness - these two are identical to the retail points model of income
+    popretailAttractors.to_csv(data_populationretail_attractors)
+
+    if not os.path.isfile(data_retailpoints_cij):
+        print("ERROR! need to run runRetailModel first to generate Cij costs")
+    else:
+        retailpoints_cij = loadMatrix(data_retailpoints_cij) #NOTE: this is the retailpoints cij costs which I am NOT going to duplicate as it's BIG!
+
+    #so it's a retail model with poulation instead of income for Ei, then retail zones, attractors and cij are identical
+    #here we go with the model then...
+
+    m, n = retailpoints_cij.shape
+    model = QUANTRetailModel(m,n)
+    model.setAttractorsAj(popretailAttractors,'zonei','Modelled turnover annual')
+    model.setPopulationEi(popretailPopulation,'zonei','count_allpeople')
+    model.setCostMatrixCij(retailpoints_cij)
+    beta = 0.13 #from the QUANT calibration
+
+    start = time.perf_counter()
+    Sij = model.run(beta)
+    end = time.perf_counter()
+    print("retail points model run elapsed time (secs)=",end-start)
+    cbar = model.computeCBar(Sij,retailpoints_cij)
+    print("cbar=",cbar)
+
+    popretail_probSij = model.computeProbabilities(Sij)
+    saveMatrix(popretail_probSij,data_populationretail_probSij)
+
 
 ################################################################################
 
@@ -309,8 +352,20 @@ def runHospitalsModel():
 
 ################################################################################
 
+"""
+Alternative hospitals model based on age group admissions
+"""
+def runAgeHospitalsModel():
+    print("not implemented")
 
+
+
+################################################################################
+
+
+################################################################################
 #Now on to the model run section
+################################################################################
 
 
 #load zone codes lookup file to convert MSOA codes into zone i indexes for the model
@@ -322,9 +377,15 @@ zonecodes.set_index('areakey')
 cij = loadQUANTMatrix(os.path.join(modelRunsDir,QUANTCijRoadMinFilename))
 
 #now run the relevant models to produce the outputs
-#runRetailModel()
+runRetailModel()
 #runSchoolsModel()
-runHospitalsModel()
+#runHospitalsModel()
+
+##new models
+#runPopulationRetailModel()
+
+#DEBUG
+#matchHospitalEpisodeData()
 
 ################################################################################
 # END OF MAIN PROGRAM                                                          #
