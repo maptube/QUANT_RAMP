@@ -60,6 +60,7 @@ if not os.path.exists(modelRunsDir):
 
 #this will get us the big QUANT road travel times matrix
 ensureFile(os.path.join(modelRunsDir,QUANTCijRoadMinFilename),url_QUANTCijRoadMinFilename)
+ensureFile(os.path.join(modelRunsDir,ZoneCodesFilename),url_QUANT_ZoneCodes) #and the zone code lookup that goes with it
 
 #todo: geolytics?
 #todo: osf schools data
