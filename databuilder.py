@@ -523,5 +523,5 @@ def matchHospitalEpisodeData():
                 maxScore=score
                 maxName=words2
         #end for
-        print(words1,'matches',maxName,maxScore)
+        print(maxScore,',',words1,',matches,',maxName)
     #end for
