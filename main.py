@@ -61,6 +61,7 @@ if not os.path.exists(modelRunsDir):
 #this will get us the big QUANT road travel times matrix
 ensureFile(os.path.join(modelRunsDir,QUANTCijRoadMinFilename),url_QUANTCijRoadMinFilename)
 ensureFile(os.path.join(modelRunsDir,ZoneCodesFilename),url_QUANT_ZoneCodes) #and the zone code lookup that goes with it
+ensureFile(os.path.join(modelRunsDir,QUANTCijRoadCentroidsFilename),url_QUANT_RoadCentroids) #and the road centroids
 
 #todo: geolytics?
 #todo: osf schools data
@@ -382,9 +383,9 @@ zonecodes.set_index('areakey')
 cij = loadQUANTMatrix(os.path.join(modelRunsDir,QUANTCijRoadMinFilename))
 
 #now run the relevant models to produce the outputs
-#runRetailModel()
-#runSchoolsModel()
-#runHospitalsModel()
+runRetailModel()
+runSchoolsModel()
+runHospitalsModel()
 
 ##new models
 #runPopulationRetailModel()
