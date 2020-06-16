@@ -26,7 +26,8 @@ lookup_DZ2001_to_IZ2001 = os.path.join(datadir_ex,"Census2011/MSOA/DZ2001Lookup.
 data_ewsModelBasedIncome = os.path.join(datadir_ex,"Census2011Modelled/ews_model-based-income.csv") #this comes from merging the file above with Scotland data changed to IZ2005
 ##
 data_hospitals = os.path.join(datadir_ex,"OSF_RAMPUrbanAnalytics/NHS Estates Information/NHS_join_mod.csv") #data on hospitals in England
-data_hospitalEpisodes = os.path.join(datadir_ex,"hosp-epis-stat-admi-prov-2018-19-tab.csv") #data on admission stats by hospital and age
+#Hospitals2 (age) data
+data_hospitalAges = os.path.join(datadir_ex,"Hospitals2/hospital_providers_and_18_19_patient_counts.csv") #data on admission stats by hospital and age
 
 
 #output files
@@ -59,11 +60,16 @@ data_secondary_population = os.path.join(modelRunsDir,"secondaryPopulation.csv")
 data_secondary_probPij = os.path.join(modelRunsDir,"secondaryProbPij.bin")
 ##
 data_totalpopulation = os.path.join(modelRunsDir,"totalpopulation_englandwalesscotland_msoaiz.csv") #this is QS103 col All People joined for E+W+S
+data_agepopulation = os.path.join(modelRunsDir,"agepopulation_englandwalesscotland_msoaiz.csv") #same as total pop, but with age breakdown
 data_hospital_cij = os.path.join(modelRunsDir,"hospitalCij.csv")
 data_hospital_zones = os.path.join(modelRunsDir,"hospitalZones.csv")
 data_hospital_attractors = os.path.join(modelRunsDir,"hospitalAttractors.csv")
 data_hospital_population = os.path.join(modelRunsDir,"hospitalPopulation.csv")
 data_hospital_probHij = os.path.join(modelRunsDir,"hospitalProbHij.bin")
+##
+data_hospitalAges_cij = os.path.join(modelRunsDir,"hospitalAgesCij.csv")
+data_hospitalAges_Oi = os.path.join(modelRunsDir,"hospitalAgesOi.csv")
+data_hospitalAges_Dj = os.path.join(modelRunsDir,"hospitalAgesDj.csv")
 ################################################################################
 #these are download urls for big external data that can't go in the GitHub repo
 #url_QUANTCijRoadMinFilename = "https://liveuclac-my.sharepoint.com/:u:/g/personal/ucfnrmi_ucl_ac_uk/EZd4HZVVHd1OuZ_Qj3uKGNcBSe_OoG6unjrVbAyRvGquaQ?e=LxuwMv"

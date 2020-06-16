@@ -407,14 +407,17 @@ Takes the QS103 age structure and merges the England/Wales and Scotland data tog
 The added complication is that Scotland is on DZ2001 boundaries, so you have to group.
 NOTE: this is basically a merge of the england and scotland version of the school age
 population table creation above. Only it's only using a single total people column.
-POST: writes out data_totalpopulation
+Then it takes the England+Wales and Scotland tables and merges them together to
+produce an Age Population table containing all the individual age counts. This is
+used for the hospitals age model.
+POST: writes out data_totalpopulation and data_agepopulation
 """
 def buildTotalPopulationTable():
     #England and Wales
     dfEW = pd.read_csv(data_census_QS103)
     dfEW['count_allpeople'] = dfEW['Age: All categories: Age; measures: Value'] # OK, you could just rename the col, not copy
     dfEW2 = pd.DataFrame({'geography code': dfEW['geography code'], 'count_allpeople': dfEW['count_allpeople']})
-    print("dfEW2 cols=",dfEW2.columns)
+    #print("dfEW2 cols=",dfEW2.columns)
     
     #Scotland (DZ2001)
     dfS = pd.read_csv(data_census_QS103SC) #join on "Unnamed: 0", it's blank! This is the datazone code field
@@ -423,7 +426,7 @@ def buildTotalPopulationTable():
     dfS = dfS.join(other=dfSLookup.set_index('ZONECODE'),on='Unnamed: 0')
     dfS['count_allpeople'] = dfS['All people']
     dfS2 = dfS.groupby(['IZ_CODE']).agg({'count_allpeople': "sum"})
-    dfS3 = pd.DataFrame({'msoaiz': dfS2.index, 'count_allpeople': dfS2['count_allpeople'] }) #cols are weird is you don't do this - dfS2 has iz as the index and we need a col
+    dfS3 = pd.DataFrame({'msoaiz': dfS2.index, 'count_allpeople': dfS2['count_allpeople'] }) #cols are weird if you don't do this - dfS2 has iz as the index and we need a col
     #NOTE: I deleted the line in the Scotland QS103SC file which contains the total for the whole of Scotland - it's a pain
 
     #now merge dfEW2 and dfS3 into one table
@@ -432,6 +435,30 @@ def buildTotalPopulationTable():
     dfEW2.columns=['msoaiz','count_allpeople']
     dfEWS = dfEW2.append(dfS3)
     dfEWS.to_csv(data_totalpopulation,index=False) #drop the index col off as EW has a numberic row id and scot has idx=IZ code - why on earth????
+
+    #now repeat, but adding in the age data to make an age structure table
+    #Scotland is a problem... we have to aggregate all these columns by IZ groups of DZ entries
+    #,All people,Under 1,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100 and over
+    dfSA = dfS.groupby(['IZ_CODE']).sum()
+    dfSA.index.rename("msoaiz", inplace=True)
+    dfSA['msoaiz']=dfSA.index #have to copy index into regular field, otherwise I can't merge it with the EW data
+    dfSA.drop({'EASTING', 'NORTHING', 'MMW_CODE', 'SPC07_CODE', 'LA_CODE','SGUR2010_6FOLD', 'LEC_CODE', 'SETT2008_CODE'},axis=1,inplace=True) #and drop the Scotland specific columns
+    #dfSA.to_csv(data_agepopulation,index=True)
+    #now you need to merge in england and wales
+    #print(dfEW.columns)
+    #print(dfSA.columns)
+    dfEW.reset_index()
+    dfEW.drop({'Rural Urban'},axis=1,inplace=True) # drop this col as not in Scotland data - what is it anyway, all it contains is 'Total'?
+    dfEW.rename({'geography code': 'msoaiz'},axis=1,inplace=True)
+    dfEW.rename({'Age: All categories: Age; measures: Value': 'All people'},axis=1,inplace=True)
+    dfEW.rename({'Age: Age under 1; measures: Value': 'Under 1'},axis=1,inplace=True)
+    for i in range(1,100):
+        dfEW.rename({'Age: Age '+str(i)+'; measures: Value': str(i)},axis=1,inplace=True)
+    dfEW.rename({'Age: Age 100 and over; measures: Value': '100 and over'},axis=1,inplace=True)
+    #that gets all the age column names the same, now we can append them together NOTE: there are some column differences between the two data
+    dfAgeEWS = dfEW.append(dfSA)
+    dfAgeEWS.to_csv(data_agepopulation,index=False)
+
 
 ################################################################################
 
@@ -533,3 +560,6 @@ def matchHospitalEpisodeData():
         #end for
         print(maxScore,',',words1,',matches,',maxName)
     #end for
+
+################################################################################
+

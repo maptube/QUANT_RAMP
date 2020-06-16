@@ -40,6 +40,8 @@ from attractions import attractions_msoa_floorspace_from_retail_points
 from quantretailmodel import QUANTRetailModel
 from quantschoolsmodel import QUANTSchoolsModel
 from quanthospitalsmodel import QUANTHospitalsModel
+from quantsingleorigin import SingleOrigin
+from quantsingledestination import SingleDestination
 from costs import costMSOAToPoint
 
 ################################################################################
@@ -359,11 +361,100 @@ def runHospitalsModel():
 ################################################################################
 
 """
-Alternative hospitals model based on age group admissions
+Alternative hospitals model based on age group admissions.
+Predict actual number of people in each age group going to each hospital.
+PRE: requires data_agepopulation
 """
 def runAgeHospitalsModel():
     print("not implemented")
+    #buildTotalPopulationTable() #should have already been done by the installer
 
+    dfMSOAAges = pd.read_csv(data_agepopulation,dtype={
+        'date':'string', 'geography':'string', 'msoaiz':'string', 'All people':float,
+        'Under 1':float, '1':float, '2':float, '3':float, '4':float, '5':float, '6':float, '7':float, '8':float, '9':float,
+        '10':float, '11':float, '12':float, '13':float, '14':float, '15':float, '16':float, '17':float, '18':float, '19':float,
+        '20':float, '21':float, '22':float, '23':float, '24':float, '25':float, '26':float, '27':float, '28':float, '29':float,
+        '30':float, '31':float, '32':float, '33':float, '34':float, '35':float, '36':float, '37':float, '38':float, '39':float,
+        '40':float, '41':float, '42':float, '43':float, '44':float, '45':float, '46':float, '47':float, '48':float, '49':float,
+        '50':float, '51':float, '52':float, '53':float, '54':float, '55':float, '56':float, '57':float, '58':float, '59':float,
+        '60':float, '61':float, '62':float, '63':float, '64':float, '65':float, '66':float, '67':float, '68':float, '69':float,
+        '70':float, '71':float, '72':float, '73':float, '74':float, '75':float, '76':float, '77':float, '78':float, '79':float,
+        '80':float, '81':float, '82':float, '83':float, '84':float, '85':float, '86':float, '87':float, '88':float, '89':float,
+        '90':float, '91':float, '92':float, '93':float, '94':float, '95':float, '96':float, '97':float, '98':float, '99':float,
+        '100 and over':float, 'count_allpeople':float
+        }) #need zonei!
+    dfMSOAAges = dfMSOAAges.join(other=zonecodes.set_index('areakey'),on='msoaiz') #zone with the zone codes to add zonei col
+    dfHospitalAges = pd.read_csv(data_hospitalAges,na_values = ['NA'])
+    dfHospitalAges.fillna(0, inplace=True)
+
+    #make the zones from the raw data
+    dfHospitalZones = pd.DataFrame({'id':dfHospitalAges['SiteAndTrustCode'],'name':dfHospitalAges['Name'],
+        'zonei':dfHospitalAges.index,'east':dfHospitalAges.oseast1m,'north':dfHospitalAges.osnrth1m})
+
+    #hospital admission fields to msoa age fields - every one is a model
+    modeldefs = {
+        'Age 0' : ['Under 1'],
+        'Age 1-4' : ['1','2','3','4'],
+        'Age 5-9' : ['5','6','7','8','9'],
+        'Age 10-14' : ['10','11','12','13','14'],
+        'Age 15' : ['15'],
+        'Age 16' : ['16'],
+        'Age 17' : ['17'],
+        'Age 18' : ['18'],
+        'Age 19' : ['19'],
+        'Age 20-24' : ['20','21','22','23','24'],
+        'Age 25-29' : ['25','26','27','28','29'],
+        'Age 30-34' : ['30','31','32','33','34'],
+        'Age 35-39' : ['35','36','37','38','39'],
+        'Age 40-44' : ['40','41','42','43','44'],
+        'Age 45-49' : ['45','46','47','48','49'],
+        'Age 50-54' : ['50','51','52','53','54'],
+        'Age 55-59' : ['55','56','57','58','59'],
+        'Age 60-64' : ['60','61','62','63','64'],
+        'Age 65-69' : ['65','66','67','68','69'],
+        'Age 70-74' : ['70','71','72','73','74'],
+        'Age 75-79' : ['75','76','77','78','79'],
+        'Age 80-84' : ['80','81','82','83','84'],
+        'Age 85-89' : ['85','86','87','88','89'],
+        'Age 90+' : ['90','91','92','93','94','95','96','97','98','99','100 and over']
+    }
+
+    #then Destinations are the hospital admissions (by age)
+    #Age 0, Age 1-4, Age 5-9, Age 10-14, Age 15, Age 16, Age 17, Age 18, Age 19, Age 20-24, Age 25-29, Age 30-34, Age 35-39, Age 40-44, Age 45-49, Age 50-54, Age 55-59, Age 60-64, Age 65-69, Age 70-74, Age 75-79, Age 80-84, Age 85-89, Age 90+
+    #NOTE: this is slightly weird - I'm basically taking the hospital age admisions table and copying it into the Dj table while adding
+    #the zonei join on the hospitals key. You could just use the original table and drop out all the extra fields, but this makes a lot
+    #more sense as the content of the Dj table is controlled by the model defs above i.e. it's easy to change the model defs
+    dfHospitalAgesDj = pd.DataFrame({'zonei':dfHospitalAges.index,'Name':dfHospitalAges.Name}) #it's always zonei, even if it's j
+    for key in modeldefs:
+        dfHospitalAgesDj[key] = dfHospitalAges[key]
+    dfHospitalAgesDj.to_csv(data_hospitalAges_Dj,index=False)
+
+    #and the Origins are the MSOA population counts (by age), grouped according to the hospital defintions
+    dfHospitalAgesOi = pd.DataFrame({'zonei':dfMSOAAges.zonei, 'msoaiz':dfMSOAAges.msoaiz})
+    for key, fields in modeldefs.items():
+        dfHospitalAgesOi[key]=dfMSOAAges[fields[0]] #I'm sure there's a better way of adding all the modeldefs fields together
+        for i in range(1,len(fields)):
+            dfHospitalAgesOi[key]+=dfMSOAAges[fields[i]]
+        #end for
+    #end for
+    dfHospitalAgesOi.to_csv(data_hospitalAges_Oi,index=False)
+
+    #make or load Cij
+    if not os.path.isfile(data_hospitalAges_cij):
+        hospitalAges_cij = costMSOAToPoint(cij,dfHospitalZones) #this takes an hour
+        saveMatrix(hospitalAges_cij, data_hospitalAges_cij)
+    else:
+        hospitalAges_cij = loadMatrix(data_hospitalAges_cij)
+
+    #that's the data, now on to the model
+    m, n = hospitalAges_cij.shape
+    #model = SingleOrigin(m,n)
+    model = SingleDestination(m,n)
+    model.setOi(dfHospitalAgesOi,'zonei','Age 45-49')
+    model.setDj(dfHospitalAgesDj,'zonei','Age 45-49')
+    model.setCostMatrixCij(hospitalAges_cij)
+    model.run()
+    #and maybe do something with the flow matrix output here?
 
 
 ################################################################################
@@ -392,6 +483,12 @@ runHospitalsModel()
 
 #DEBUG
 #matchHospitalEpisodeData()
+#geocodeHospitalEpisodeData(
+#    os.path.join(datadir_ex,'NSPL_FEB_2019_UK/Data/NSPL_FEB_2019_UK.csv'),
+#    os.path.join(datadir_ex,'Hospitals2/hospital_providers_and_18_19_patient_counts.csv'),
+#    os.path.join(datadir_ex,'Hospitals2/hospital_providers_and_18_19_patient_counts_geocoded.csv'))
+
+#runAgeHospitalsModel()
 
 ################################################################################
 # END OF MAIN PROGRAM                                                          #
