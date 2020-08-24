@@ -307,6 +307,14 @@ def geolytixRegression(inRestrictedFilename,inOpenDataFilename,outGeolytixRegres
     print('dataBuilder::geolytixRegression:: model.score = ',model.score(x,y))
     #y_new = model.predict(new_x)
     #TODO: can you print out the model params here?
+    print("REGRESSION DATA")
+    print(model.get_params())
+    print(model.coef_) #[738.96967827] #NOTE: this is an np.array
+    print(model.intercept_) #2429081.7748885565
+    print(dir(model))
+    print(dir(model.coef_))
+    print(model.coef_.T)
+    print("END OF REGRESSION DATA")
 
     #using our new found ability to predict annual turnover from floorspace,
     #go through all the open data, drop in the real data from the restricted
@@ -343,6 +351,61 @@ def geolytixRegression(inRestrictedFilename,inOpenDataFilename,outGeolytixRegres
 
     #and save...
     dfOpen.to_csv(outGeolytixRegression)
+
+################################################################################
+
+"""
+geolytixOpenDataRegression
+Same as geolytixRegression, but only uses the Geolytix open data so that it's repeatable.
+The regression params are hardcoded, but based on values obtained from running our own
+regression on restricted Geolytix data.
+What this does is to take the floorspace bands in the Geolytix open data, which are
+aggregated into one of four bands, and write a new "modelled sq ft" column and a new
+"Modelled turnover annual" column based on regression data. It's just a simple linear
+regression from the floorspace to turnover, based on hard coding regression data which
+we obtained from the restricted dataset containing the economic data for 4,000 retail
+points.
+@param inOpenDataFilename
+@param outGeolytixRegression 
+"""
+def geolytixOpenDataRegression(inOpenDataFilename,outGeolytixRegression):
+    #set up a linear regression predictor directly from data we have obtained from restricted sales data
+    model = LinearRegression()
+    model.coef_=np.array([738.96967827])
+    model.intercept_=2429081.7748885565
+    model.copy_X=True
+    model.fit_intercept=True
+    model.normalize=False
+    #and this is default: {'copy_X': True, 'fit_intercept': True, 'n_jobs': None, 'normalize': False}
+    
+    #the rest is just a copy from geolytixRegression... but with the merge of the restricted data and open data removed - everything comes from the regression params
+
+    #using our new found ability to predict annual turnover from floorspace,
+    #go through all the open data, drop in the real data from the restricted
+    #file where the unique ids match, or use the regression model to fill in
+    #the turnover from the approximate floorspace range otherwise.
+    dfOpen = pd.read_csv(inOpenDataFilename)
+
+    #id,retailer,fascia,store_name,add_one,add_two,town,suburb,postcode,long_wgs,lat_wgs,bng_e,bng_n,pqi,open_date,size_band
+    #1010004593,Tesco,Tesco Express,Tesco Eastern Seaside Road Express,133-135 Seaside Road,,Eastbourne,Meads,BN21 3PA,0.293276318,50.76901815,561808.4009,99110.41946,Rooftop geocoded by Geolytix,,"< 3,013 ft2 (280m2)"
+    #size bands: "< 3,013 ft2 (280m2)" "15,069 < 30,138 ft2 (1,400 < 2,800 m2)" "3,013 < 15,069 ft2 (280 < 1,400 m2)" "30,138 ft2 > (2,800 m2)"
+    medianSizeBands = {
+        "< 3,013 ft2 (280m2)": 1506.5,
+        "3,013 < 15,069 ft2 (280 < 1,400 m2)": 9041.0,
+        "15,069 < 30,138 ft2 (1,400 < 2,800 m2)": 22603.5,
+        "30,138 ft2 > (2,800 m2)": 30138.0
+    }
+    dfOpen['modelled sq ft'] = [ medianSizeBands[f] for f in dfOpen['size_band'] ] #that fills a new sq ft column with approx sizes
+    #OK, that's sorted the floorspace, now put in a modelled turnover column
+    #use the regression model to fill in turnover
+    dfOpen['Modelled turnover annual'] = [model.predict(np.array(x).reshape(-1,1))[0] for x in dfOpen['modelled sq ft'] ]
+    #And that's all there is, except to point out that there could be gluids in the restricted file that aren't in the open data - ignoring the
+    #extras for now - I did find the odd one, but then there are 16,000 retail points here
+
+    #and save...
+    dfOpen.to_csv(outGeolytixRegression)
+
+
 
 ################################################################################
 

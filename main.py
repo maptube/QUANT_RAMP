@@ -31,7 +31,7 @@ from globals import *
 from utils import loadQUANTMatrix, loadMatrix, saveMatrix, zonecodeIndexData
 from zonecodes import ZoneCodes
 from databuilder import ensureFile, changeGeography
-from databuilder import geolytixRegression, geocodeGeolytix, computeGeolytixCosts
+from databuilder import geolytixRegression, geolytixOpenDataRegression, geocodeGeolytix, computeGeolytixCosts
 from databuilder import buildSchoolsPopulationTableEnglandWales, buildSchoolsPopulationTableScotland
 from databuilder import buildTotalPopulationTable
 from databuilder import matchHospitalEpisodeData
@@ -43,6 +43,7 @@ from quanthospitalsmodel import QUANTHospitalsModel
 from quantsingleorigin import SingleOrigin
 from quantsingledestination import SingleDestination
 from costs import costMSOAToPoint
+from analytics import runAnalytics
 
 ################################################################################
 # Initialisation                                                               #
@@ -82,8 +83,13 @@ ensureFile(os.path.join(modelRunsDir,QUANTCijRoadCentroidsFilename),url_QUANT_Ro
 #databuilder.py - use regression to add floorspace data and regression turnover data to the open Geolytix data
 #NOTE: the result of dong this is the regression file, which contains RESTRICTED Geolytix data and so is
 #itself RESTRICTED DATA!
-if not os.path.isfile(data_restricted_geolytix_regression):
-    geolytixRegression(data_restricted_geolytix_supermarketattractivenenss,data_geolytix_retailpoints,data_restricted_geolytix_regression)
+#if not os.path.isfile(data_restricted_geolytix_regression):
+#    geolytixRegression(data_restricted_geolytix_supermarketattractivenenss,data_geolytix_retailpoints,data_restricted_geolytix_regression)
+
+#This is the open data version of the above restricted data regression - uses linear regression params derived from the above data that we can't release
+if not os.path.isfile(data_open_geolytix_regression):
+    geolytixOpenDataRegression(data_geolytix_retailpoints,data_open_geolytix_regression)
+
 
 #databuilder.py - build schools population table if needed - requires QS103 AND QS103SC on DZ2001 for Scotland
 if not os.path.isfile(data_schoolagepopulation_englandwales):
@@ -147,7 +153,8 @@ def runRetailModel():
 
     #load the Geolytix retail points file and make an attraction vector from the floorspace
     #retailPoints = loadCSV(data_retailpoints_geocoded)
-    retailZones, retailAttractors = QUANTRetailModel.loadGeolytixData(data_restricted_geolytix_regression)
+    #retailZones, retailAttractors = QUANTRetailModel.loadGeolytixData(data_restricted_geolytix_regression) #this is the restricted data
+    retailZones, retailAttractors = QUANTRetailModel.loadGeolytixData(data_open_geolytix_regression) #and this is the open data
     retailZones.to_csv(data_retailpoints_zones)
     retailAttractors.to_csv(data_retailpoints_attractors)
 
@@ -471,15 +478,24 @@ zonecodes = pd.read_csv(os.path.join(modelRunsDir,ZoneCodesFilename))
 zonecodes.set_index('areakey')
 
 #load cost matrix, time in minutes between MSOA zones
-cij = loadQUANTMatrix(os.path.join(modelRunsDir,QUANTCijRoadMinFilename))
+#cij = loadQUANTMatrix(os.path.join(modelRunsDir,QUANTCijRoadMinFilename))
 
 #now run the relevant models to produce the outputs
-runRetailModel()
-runSchoolsModel()
-runHospitalsModel()
+#runRetailModel()
+#runSchoolsModel()
+#runHospitalsModel()
 
 ##new models
 #runPopulationRetailModel()
+
+################################################################################
+#analytics - let's see how well it works                                       #
+################################################################################
+
+runAnalytics()
+
+
+################################################################################
 
 #DEBUG
 #matchHospitalEpisodeData()

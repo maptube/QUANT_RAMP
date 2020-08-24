@@ -14,6 +14,7 @@ data_msoa_shapefile = os.path.join(datadir_ex, "geography/infuse_msoa_lyr_2011_c
 data_geolytix_retailpoints = os.path.join(datadir_ex,"Geolytix/GEOLYTIX - RetailPoints/geolytix_retailpoints_v15_202001.csv")
 data_restricted_geolytix_supermarketattractivenenss = os.path.join(datadir_ex,"Geolytix/Supermarket Attractiveness Feb 2019.csv")
 data_restricted_geolytix_regression = os.path.join(datadir_ex,"Geolytix/geolytix_retailpoints_regression.csv")
+data_open_geolytix_regression = os.path.join(datadir_ex,"Geolytix/geolytix_retailpoints_open_regression.csv")
 #data_schools_ewprimary = os.path.join(datadir_ex,"OSF_RAMPUrbanAnalytics/primary_ew.csv")
 #data_schools_ewsecondary = os.path.join(datadir_ex,"OSF_RAMPUrbanAnalytics/secondary_ew.csv")
 data_schools_ews_primary = os.path.join(datadir_ex,"OSF_RAMPUrbanAnalytics/primary_ews.csv")
