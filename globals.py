@@ -74,9 +74,12 @@ data_hospitalAges_Dj = os.path.join(modelRunsDir,"hospitalAgesDj.csv")
 ################################################################################
 #these are download urls for big external data that can't go in the GitHub repo
 #url_QUANTCijRoadMinFilename = "https://liveuclac-my.sharepoint.com/:u:/g/personal/ucfnrmi_ucl_ac_uk/EZd4HZVVHd1OuZ_Qj3uKGNcBSe_OoG6unjrVbAyRvGquaQ?e=LxuwMv"
-url_QUANTCijRoadMinFilename = "https://liveuclac-my.sharepoint.com/:u:/g/personal/ucfnrmi_ucl_ac_uk/EZd4HZVVHd1OuZ_Qj3uKGNcBSe_OoG6unjrVbAyRvGquaQ?e=LxuwMv&download=1"
-url_QUANT_ZoneCodes = "https://liveuclac-my.sharepoint.com/:x:/g/personal/ucfnrmi_ucl_ac_uk/EdlPQ9GtHsFBigZ_sUnOKX0BqJB38g_TeqX8NorvojelfQ?e=6ZsPBE&download=1"
-url_QUANT_RoadCentroids = "https://liveuclac-my.sharepoint.com/:x:/g/personal/ucfnrmi_ucl_ac_uk/EaaFuf1eP71AvQmBbuV464EBzktg_HmBFWaRq8ycnT2v8A?e=bTH6Uy&download=1"
+#url_QUANTCijRoadMinFilename = "https://liveuclac-my.sharepoint.com/:u:/g/personal/ucfnrmi_ucl_ac_uk/EZd4HZVVHd1OuZ_Qj3uKGNcBSe_OoG6unjrVbAyRvGquaQ?e=LxuwMv&download=1"
+#url_QUANT_ZoneCodes = "https://liveuclac-my.sharepoint.com/:x:/g/personal/ucfnrmi_ucl_ac_uk/EdlPQ9GtHsFBigZ_sUnOKX0BqJB38g_TeqX8NorvojelfQ?e=6ZsPBE&download=1"
+#url_QUANT_RoadCentroids = "https://liveuclac-my.sharepoint.com/:x:/g/personal/ucfnrmi_ucl_ac_uk/EaaFuf1eP71AvQmBbuV464EBzktg_HmBFWaRq8ycnT2v8A?e=bTH6Uy&download=1"
+url_QUANTCijRoadMinFilename = "https://osf.io/u2mz6/download"
+url_QUANT_ZoneCodes = "https://osf.io/hu7bd/download"
+url_QUANT_RoadCentroids = "https://osf.io/usm84/download"
 #osf schools
 ################################################################################
 
